@@ -17,6 +17,7 @@ const useFetch = () => {
 
     try {
       const { data } = await api.request(config);
+      console.log(data);
       setState({
         loading: false,
         data,
@@ -37,7 +38,7 @@ const useFetch = () => {
       });
 
       if (showErrorToast) toast.error(msg);
-      return Promise.reject();
+      return Promise.reject(error);
     }
   }, []);
 

@@ -29,7 +29,7 @@ export const postLoginData = (email, password) => async (dispatch) => {
 export const saveProfile = (token) => async (dispatch) => {
   try {
     const { data } = await api.get('/profile', {
-      headers: { Authorization: token }
+      headers: { Authorization: `Bearer ${token}` }
     });
     dispatch({
       type: SAVE_PROFILE,
@@ -37,7 +37,7 @@ export const saveProfile = (token) => async (dispatch) => {
     });
   }
   catch (error) {
-    // console.log(error);
+    console.error("Profile fetch failed:", error.response?.data || error.message);
   }
 }
 

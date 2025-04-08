@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { getProfile } = require("../controllers/profileControllers");
-const { verifyAccessToken } = require("../middlewares.js");
+const { verifyAccessToken } = require("../middleware");
 
 // Routes beginning with /api/profile
 router.get("/", verifyAccessToken, getProfile);
