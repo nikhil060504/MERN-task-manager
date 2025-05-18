@@ -97,6 +97,11 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  lastReminderSentAt: {
+  type: Date,
+  default: null
+},
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Task', taskSchema);

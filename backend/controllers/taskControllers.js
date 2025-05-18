@@ -241,6 +241,17 @@ exports.getTaskStats = async (req, res) => {
   }
 };
 
+exports.getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task || task.user.toString() !== req.user._id) {
+      return res.status(404).json({ message: "Task not found or unauthorized" });
+    }
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 exports.updateTask = async (req, res) => {
   try {
@@ -251,7 +262,7 @@ exports.updateTask = async (req, res) => {
     }
 
     // Ensure the task belongs to the user making the request
-    if (task.user.toString() !== req.user.id) {
+    if (task.user.toString() !== req.user._id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -287,20 +298,27 @@ exports.sendReminders = async (req, res) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const tasks = await Task.find({
-      dueDate: { $lte: tomorrow },
-      status: { $ne: "completed" }
-    }).populate("user", "email");
+  const tasks = await Task.find({
+  dueDate: { $lte: tomorrow },
+  status: { $ne: "completed" },
+  reminderSent: false
+}).populate("user", "email");
+
 
     let sentCount = 0;
 
-    for (const task of tasks) {
-      if (!task.user?.email) continue;
+ for (const task of tasks) {
+  if (!task.user?.email) continue;
 
-      const message = `Reminder: Your task "${task.title}" is due soon.\n\nDescription: ${task.description}\nDue Date: ${task.dueDate}`;
-      await sendEmail(task.user.email, "Task Reminder", message);
-      sentCount++;
-    }
+  const message = `Reminder: Your task "${task.title}" is due soon.\n\nDescription: ${task.description}\nDue Date: ${task.dueDate}`;
+  
+  await sendEmail(task.user.email, "Task Reminder", message);
+  task.reminderSent = true; // ✅ Mark as sent
+  await task.save();        // ✅ Save to DB
+
+  sentCount++;
+}
+
 
     res.status(200).json({ message: `${sentCount} reminder(s) sent.` });
   } catch (err) {

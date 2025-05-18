@@ -8,6 +8,7 @@ const AddTask = () => {
   const [fetchData, { loading }] = useFetch();
   const navigate = useNavigate();
 
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -107,13 +108,26 @@ const AddTask = () => {
     <option value="other">Other</option>
   </select>
 
-  <input
+  {/* <input
     type="date"
     name="dueDate"
     value={formData.dueDate}
     onChange={handleChange}
     className="w-full p-2 border rounded"
+  /> */}
+<div className="my-2">
+  <label className="block mb-1 font-medium">Due Date & Time</label>
+  <input
+    type="datetime-local"
+    name="dueDate"
+    value={formData.dueDate}
+    onChange={handleChange}
+    required
+    className="border p-2 rounded w-full"
   />
+</div>
+
+
 
   <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded" disabled={loading}>
     {loading ? 'Adding...' : 'Add Task'}

@@ -15,6 +15,7 @@ const EditTask = () => {
     status: 'pending',
     priority: 'medium',
     category: 'other',
+    dueDate:'',
   });
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const EditTask = () => {
         status: data.status,
         priority: data.priority,
         category: data.category,
+         dueDate: data.dueDate?.slice(0, 16),
       });
     };
     fetchTask();
@@ -82,7 +84,7 @@ const EditTask = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <select name="status" value={formData.status} onChange={handleChange} className="w-full px-4 py-2 border rounded-md">
               <option value="pending">Pending</option>
-              <option value="in progress">In Progress</option>
+              <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
 
@@ -100,6 +102,18 @@ const EditTask = () => {
               <option value="other">Other</option>
             </select>
           </div>
+          
+          <div>
+  <label className="block mb-1 font-medium">Due Date & Time</label>
+  <input
+    type="datetime-local"
+    name="dueDate"
+    value={formData.dueDate}
+    onChange={handleChange}
+    required
+    className="w-full px-4 py-2 border rounded-md"
+  />
+</div>
 
           <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
             Save Changes

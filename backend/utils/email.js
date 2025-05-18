@@ -4,8 +4,8 @@ const sendEmail = async (to, subject, text) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER, // set in .env
-      pass: process.env.EMAIL_PASS, // set in .env
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 
@@ -16,8 +16,12 @@ const sendEmail = async (to, subject, text) => {
     text,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent to ${to}`);
+  } catch (err) {
+    console.error("❌ Email failed:", err);
+  }
 };
 
 module.exports = sendEmail;
-

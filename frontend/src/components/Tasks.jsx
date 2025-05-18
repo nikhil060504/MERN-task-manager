@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import useFetch from '../hooks/useFetch';
 import Loader from '../components/utils/Loader';
-import Pagination from '../components/utils/Pagination';
+//import Pagination from '../components/utils/Pagination';
 //import TaskCard from '../components/TaskCard';
 
 import Tooltip from './utils/Tooltip';
@@ -185,44 +185,55 @@ const Tasks = () => {
             ) : (
  
 
-              tasks.map((task, index) => (
-                <div key={task._id} className='bg-white my-4 p-4 text-gray-600 rounded-md shadow-md'>
-                  <div className='flex'>
+            tasks.map((task, index) => (
+  <div
+    key={task._id}
+    className="bg-white my-4 p-4 rounded-md shadow-md text-gray-600"
+  >
+    <div className="flex">
+      <span
+        className={`font-medium ${
+          task.status === "completed" ? "line-through text-gray-500" : ""
+        }`}
+      >
+        Task #{index + 1}
+      </span>
 
-                    <span className='font-medium'>Task #{index + 1}</span>
+      <Tooltip text={"Edit this task"} position={"top"}>
+        <Link
+          to={`/tasks/${task._id}`}
+          className="ml-auto mr-2 text-green-600 cursor-pointer"
+        >
+          <i className="fa-solid fa-pen"></i>
+        </Link>
+      </Tooltip>
 
-                    <Tooltip text={"Edit this task"} position={"top"}>
-                      <Link to={`/tasks/${task._id}`} className='ml-auto mr-2 text-green-600 cursor-pointer'>
-                        <i className="fa-solid fa-pen"></i>
-                      </Link>
-                    </Tooltip>
+      <Tooltip text={"Delete this task"} position={"top"}>
+        <span
+          className="text-red-500 cursor-pointer"
+          onClick={() => handleDelete(task._id)}
+        >
+          <i className="fa-solid fa-trash"></i>
+        </span>
+      </Tooltip>
+    </div>
 
-                    <Tooltip text={"Delete this task"} position={"top"}>
-                      <span className='text-red-500 cursor-pointer' onClick={() => handleDelete(task._id)}>
-                        <i className="fa-solid fa-trash"></i>
-                      </span>
-                    </Tooltip>
+    <div
+      className={`whitespace-pre mb-1 ${
+        task.status === "completed" ? "line-through text-gray-500" : ""
+      }`}
+    >
+      {task.description}
+    </div>
 
-                  </div>
-                  <div className='whitespace-pre mb-1'>{task.description}</div>
-{task.category && (
-  <div className='text-sm text-blue-600 font-medium'>
-    Category: {task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+    {task.category && (
+      <div className="text-sm text-blue-600 font-medium">
+        Category: {task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+      </div>
+    )}
   </div>
-)}
-{totalPages > 1 && (
-  <Pagination
-    currentPage={page}
-    totalPages={totalPages}
-    onPageChange={(newPage) => {
-      setPage(newPage);
-    }}
-  />
-)}
+))
 
-
-                </div>
-              ))
 
             )}
             <button

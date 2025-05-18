@@ -14,7 +14,7 @@
 
 
 const express = require("express");
-const { createTask, getTasks,getAllTasks, getTaskStats, updateTask, deleteTask } = require("../controllers/taskControllers");
+const { createTask, getTasks,getAllTasks, getTaskStats, updateTask, deleteTask,getTaskById } = require("../controllers/taskControllers");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -24,12 +24,15 @@ const { verifyAccessToken } = require('../middleware/index.js');
 
 
 const { sendReminders } = require("../controllers/taskControllers");
-router.get("/send-reminders", sendReminders);
+router.get("/send-reminders", verifyAccessToken, sendReminders);
+
 router.post("/", verifyAccessToken, createTask);
 
 router.get("/", authMiddleware, getTasks);
+router.get("/:id", authMiddleware, getTaskById); 
 router.get("/", authMiddleware, getAllTasks); 
 router.get('/stats', authMiddleware, getTaskStats);
+
 
 router.put("/:id", authMiddleware, updateTask);
 
