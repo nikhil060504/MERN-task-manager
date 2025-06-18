@@ -7,7 +7,6 @@ const isValidEmail = (email) => {
 };
 
 export const validate = (group, name, value) => {
-
   if (group === "signup") {
     switch (name) {
       case "name": {
@@ -24,11 +23,15 @@ export const validate = (group, name, value) => {
         if (value.length < 4) return "Password should be atleast 4 chars long";
         return null;
       }
-      default: return null;
+      case "role": {
+        if (!value) return "This field is required";
+        if (!["user", "admin"].includes(value)) return "Invalid role selected";
+        return null;
+      }
+      default:
+        return null;
     }
-  }
-
-  else if (group === "login") {
+  } else if (group === "login") {
     switch (name) {
       case "email": {
         if (!value) return "This field is required";
@@ -39,26 +42,23 @@ export const validate = (group, name, value) => {
         if (!value) return "This field is required";
         return null;
       }
-      default: return null;
+      default:
+        return null;
     }
-  }
-  else if (group === "task") {
+  } else if (group === "task") {
     switch (name) {
       case "description": {
         if (!value) return "This field is required";
         if (value.length > 100) return "Max. limit is 100 characters.";
         return null;
       }
-      default: return null;
+      default:
+        return null;
     }
-  }
-
-  else {
+  } else {
     return null;
   }
-
-}
-
+};
 
 const validateManyFields = (group, list) => {
   const errors = [];
@@ -67,5 +67,5 @@ const validateManyFields = (group, list) => {
     if (err) errors.push({ field, err });
   }
   return errors;
-}
+};
 export default validateManyFields;

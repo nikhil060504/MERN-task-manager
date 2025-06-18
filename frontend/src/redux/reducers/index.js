@@ -1,8 +1,10 @@
-import { combineReducers } from "redux"
-import authReducer from "./authReducer"
+import { combineReducers } from "redux";
+import authReducer from "./authReducer";
+import taskReducer from "./taskReducer";
 
 const rootReducer = combineReducers({
-  authReducer,
+  auth: authReducer,
+  tasks: taskReducer,
 });
 
 export default rootReducer;

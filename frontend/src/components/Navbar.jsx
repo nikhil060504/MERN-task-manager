@@ -1,63 +1,62 @@
-import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { logout } from '../redux/actions/authActions';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../redux/actions/authActions";
+import { FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
 
 const Navbar = () => {
-
-  const authState = useSelector(state => state.authReducer);
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [isNavbarOpen, setIsNavbarOpen] = useState(false);
-  const toggleNavbar = () => {
-    setIsNavbarOpen(!isNavbarOpen);
-  }
+  const authState = useSelector((state) => state.auth);
+  const user = authState?.user;
 
-  const handleLogoutClick = () => {
+  const [darkMode, setDarkMode] = React.useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  const handleLogout = () => {
     dispatch(logout());
-  }
+    navigate("/login");
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  if (!user) return null;
 
   return (
-    <>
-      <header className='flex justify-between sticky top-0 p-4 bg-white shadow-sm items-center'>
-        <h2 className='cursor-pointer uppercase font-medium'>
-          <Link to="/"> Task Manager </Link>
-        </h2>
-        <ul className='hidden md:flex gap-4 uppercase font-medium'>
-          {authState.isLoggedIn ? (
-            <>
-              <li className="bg-blue-500 text-white hover:bg-blue-600 font-medium rounded-md">
-                <Link to='/tasks/add' className='block w-full h-full px-4 py-2'> <i className="fa-solid fa-plus"></i> Add task </Link>
-              </li>
-              <li className='py-2 px-3 cursor-pointer hover:bg-gray-200 transition rounded-sm' onClick={handleLogoutClick}>Logout</li>
-            </>
-          ) : (
-            <li className='py-2 px-3 cursor-pointer text-primary hover:bg-gray-100 transition rounded-sm'><Link to="/login">Login</Link></li>
-          )}
-        </ul>
-        <span className='md:hidden cursor-pointer' onClick={toggleNavbar}><i className="fa-solid fa-bars"></i></span>
+    <nav className="bg-white dark:bg-gray-800 shadow-md py-3 px-6 flex items-center justify-between w-full transition-colors duration-200">
+      <span className="text-2xl font-bold text-blue-700 dark:text-blue-400 tracking-tight select-none">
+        Task Manager
+      </span>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={toggleDarkMode}
+          className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {darkMode ? <FaSun /> : <FaMoon />}
+        </button>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow"
+        >
+          <FaSignOutAlt /> Logout
+        </button>
+      </div>
+    </nav>
+  );
+};
 
-
-        {/* Navbar displayed as sidebar on smaller screens */}
-        <div className={`absolute md:hidden right-0 top-0 bottom-0 transition ${(isNavbarOpen === true) ? 'translate-x-0' : 'translate-x-full'} bg-gray-100 shadow-md w-screen sm:w-9/12 h-screen`}>
-          <div className='flex'>
-            <span className='m-4 ml-auto cursor-pointer' onClick={toggleNavbar}><i className="fa-solid fa-xmark"></i></span>
-          </div>
-          <ul className='flex flex-col gap-4 uppercase font-medium text-center'>
-            {authState.isLoggedIn ? (
-              <>
-                <li className="bg-blue-500 text-white hover:bg-blue-600 font-medium transition py-2 px-3">
-                  <Link to='/tasks/add' className='block w-full h-full'> <i className="fa-solid fa-plus"></i> Add task </Link>
-                </li>
-                <li className='py-2 px-3 cursor-pointer hover:bg-gray-200 transition rounded-sm' onClick={handleLogoutClick}>Logout</li>
-              </>
-            ) : (
-              <li className='py-2 px-3 cursor-pointer text-primary hover:bg-gray-200 transition rounded-sm'><Link to="/login">Login</Link></li>
-            )}
-          </ul>
-        </div>
-      </header>
-    </>
-  )
-}
-
-export default Navbar
+export default Navbar;

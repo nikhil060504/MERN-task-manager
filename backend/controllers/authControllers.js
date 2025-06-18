@@ -3,7 +3,6 @@
 // const { createAccessToken } = require("../utils/token");
 // const { validateEmail } = require("../utils/validation");
 
-
 // exports.signup = async (req, res) => {
 //   try {
 //     const { name, email, password } = req.body;
@@ -13,7 +12,6 @@
 //     if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string") {
 //       return res.status(400).json({ msg: "Please send string values only" });
 //     }
-
 
 //     if (password.length < 4) {
 //       return res.status(400).json({ msg: "Password length must be atleast 4 characters" });
@@ -38,8 +36,6 @@
 //   }
 // }
 
-
-
 // exports.login = async (req, res) => {
 //   try {
 //     const { email, password } = req.body;
@@ -63,11 +59,6 @@
 //   }
 // }
 
-
-
-
-
-
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -85,7 +76,6 @@ exports.signup = async (req, res) => {
 
     await user.save();
     res.status(201).json({ message: "User registered successfully" });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -99,12 +89,20 @@ exports.login = async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // Log the token and user for debugging
+    console.log("[LOGIN] Generated token:", token);
+    console.log("[LOGIN] User:", user);
 
     res.json({ token, user });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -118,4 +116,3 @@ exports.getUserProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

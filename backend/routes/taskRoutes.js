@@ -12,42 +12,35 @@
 
 // module.exports = router;
 
-
 const express = require("express");
-const { createTask, getTasks, getTaskStats, updateTask, deleteTask,getTaskById,getTaskCompletionGraph,getCalenderEvents } = require("../controllers/taskControllers");
+const {
+  createTask,
+  getTasks,
+  getTaskStats,
+  updateTask,
+  deleteTask,
+  getTaskById,
+  getTaskCompletionGraph,
+  getCalenderEvents,
+  bulkCreateTasks,
+  sendReminders,
+} = require("../controllers/taskControllers");
 const authMiddleware = require("../middleware/authMiddleware");
-//const { protect } = require('../middleware/index');
+
 const router = express.Router();
 
- //router.use(protect);
-const { verifyAccessToken } = require('../middleware/index');
+// Use authMiddleware consistently for all routes
+router.get("/stats", authMiddleware, getTaskStats);
+router.get("/send-reminders", authMiddleware, sendReminders);
+router.get("/events", authMiddleware, getCalenderEvents);
+router.get("/completion-graph", authMiddleware, getTaskCompletionGraph);
 
-
-const { sendReminders } = require("../controllers/taskControllers");
-router.get("/send-reminders", verifyAccessToken, sendReminders);
- router.get('/stats',authMiddleware, getTaskStats);
-router.post("/", verifyAccessToken, createTask);
-
- router.get("/", authMiddleware, getTasks);
- // This must be before any protected route
-router.get("/events", authMiddleware, getCalendarEvents);
- router.get('/completion-graph', verifyAccessToken, getTaskCompletionGraph);
-
- router.get("/:id", authMiddleware, getTaskById); 
- // router.get("/", authMiddleware, getAllTasks); 
-
-
-
+// CRUD operations
+router.get("/", authMiddleware, getTasks);
+router.post("/", authMiddleware, createTask);
+router.post("/bulk", authMiddleware, bulkCreateTasks);
+router.get("/:id", authMiddleware, getTaskById);
 router.put("/:id", authMiddleware, updateTask);
-
- router.delete("/:id", authMiddleware, deleteTask);
-
-
-
-
-
-// Protected Routes
-
+router.delete("/:id", authMiddleware, deleteTask);
 
 module.exports = router;
-

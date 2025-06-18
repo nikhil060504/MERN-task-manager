@@ -1,35 +1,37 @@
-const Task = require('../models/Task');
-const sendEmail = require('./email');
-const User = require('../models/User');
+const Task = require("../models/Task");
+const sendEmail = require("./email");
+const User = require("../models/User");
 
 const checkReminders = async () => {
   const now = new Date();
-  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-  const oneMinuteAhead = new Date(now.getTime() + 1 * 60 * 1000);
-
+  // Find tasks where reminder has not been sent, and the due date/time is now or past
   const tasks = await Task.find({
-    dueDate: { $lte: oneMinuteAhead }, // buffer ahead
     status: { $ne: "completed" },
-    $or: [
-      { lastReminderSentAt: null },
-      { lastReminderSentAt: { $lte: fiveMinutesAgo } }
-    ]
+    reminderSent: false,
+    dueDate: { $ne: null },
   }).populate("user", "email");
-
-  console.log("🔎 Reminder Check Time:", now.toISOString());
-  console.log("🔔 Tasks to remind:", tasks.length);
 
   for (const task of tasks) {
     if (!task.user?.email) continue;
-
-    await sendEmail(
-      task.user.email,
-      `⏰ Reminder: Task "${task.title}" is due`,
-      `Your task "${task.title}" is still pending.\n\nDescription: ${task.description}\nDue Date: ${new Date(task.dueDate).toLocaleString()}`
-    );
-
-    task.lastReminderSentAt = now;
-    await task.save();
+    // Combine dueDate and dueTime for comparison
+    let dueDateTime = new Date(task.dueDate);
+    if (task.dueTime) {
+      const [hours, minutes] = task.dueTime.split(":");
+      dueDateTime.setHours(Number(hours), Number(minutes), 0, 0);
+    }
+    // If now is after or equal to dueDateTime, send reminder
+    if (now >= dueDateTime) {
+      await sendEmail(
+        task.user.email,
+        `⏰ Reminder: Task "${task.title}" is due`,
+        `Your task "${task.title}" is still pending.\n\nDescription: ${
+          task.description
+        }\nDue Date: ${dueDateTime.toLocaleString()}`
+      );
+      task.reminderSent = true;
+      task.lastReminderSentAt = now;
+      await task.save();
+    }
   }
 };
 

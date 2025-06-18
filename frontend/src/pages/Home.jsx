@@ -1,118 +1,88 @@
-// import React, { useEffect } from 'react'
-// import { useSelector } from 'react-redux';
-// import { Link } from 'react-router-dom';
-// import Tasks from '../components/Tasks';
-// import MainLayout from '../layouts/MainLayout';
-// import StatsCards from '../components/StatsCards';
-// const Home = () => {
-
-//   const authState = useSelector(state => state.authReducer);
-//   const { isLoggedIn } = authState;
-
-//   useEffect(() => {
-//     document.title = authState.isLoggedIn ? `${authState.user.name}'s tasks` : "Task Manager";
-//   }, [authState]);
-
-
-
-//   return (
-//     <>
-//       <MainLayout>
-//         {!isLoggedIn ? (
-//           <div className='bg-primary text-white h-[40vh] py-8 text-center'>
-//             <h1 className='text-2xl'> Welcome to Task Manager App</h1>
-//             <Link to="/signup" className='mt-10 text-xl block space-x-2 hover:space-x-4'>
-//               <span className='transition-[margin]'>Join now to manage your tasks</span>
-//               <span className='relative ml-4 text-base transition-[margin]'><i className="fa-solid fa-arrow-right"></i></span>
-//             </Link>
-//           </div>
-//         ) : (
-//           <>
-//             <h1 className='text-lg mt-8 mx-8 border-b border-b-gray-300'>Welcome {authState.user.name}</h1>
-//            <StatsCards/>
-//             <Tasks />
-//           </>
-//         )}
-//       </MainLayout>
-//     </>
-//   )
-// }
-
-// export default Home
-
-
-
-
-
-
-
-
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-
-import Tasks from '../components/Tasks';
-import MainLayout from '../layouts/MainLayout';
-import StatsCards from '../components/StatsCards';
-import TaskCompletionGraph from '../components/TaskCompletionGraph';
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import AdvancedCalendar from "../components/AdvancedCalendar";
+import Tasks from "../components/Tasks";
+import MainLayout from "../layouts/MainLayout";
+import StatsCards from "../components/StatsCards";
+import TaskCompletionGraph from "../components/TaskCompletionGraph";
+import { FaCalendarAlt, FaChartBar } from "react-icons/fa";
 
 const Home = () => {
-  const authState = useSelector(state => state.authReducer);
+  const authState = useSelector((state) => state.auth) || {
+    isLoggedIn: false,
+    token: null,
+    user: null,
+  };
   const { isLoggedIn, token, user } = authState;
 
   const [graphData, setGraphData] = useState([]);
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
 
   useEffect(() => {
-    document.title = isLoggedIn ? `${user.name}'s tasks` : 'Task Manager';
-
+    document.title =
+      isLoggedIn && user ? `${user.name}'s tasks` : "Task Manager";
     const fetchGraphData = async () => {
       try {
-        const res = await axios.get('/api/tasks/completion-graph', {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await axios.get("/api/tasks/completion-graph", {
+          headers: { Authorization: `Bearer ${token}` },
         });
         setGraphData(res.data);
       } catch (err) {
-        console.error('Failed to load graph data:', err);
+        console.error("Failed to load graph data:", err);
       }
     };
-
-    if (isLoggedIn) fetchGraphData();
-  }, [isLoggedIn, token, user.name]);
+    if (isLoggedIn && token) fetchGraphData();
+  }, [isLoggedIn, token, user]);
 
   return (
     <MainLayout>
-      {!isLoggedIn ? (
-        <div className="bg-primary text-white h-[40vh] py-8 text-center">
-          <h1 className="text-3xl font-semibold">Welcome to Task Manager App</h1>
-          <Link to="/signup" className="mt-10 text-xl inline-block hover:underline">
-            Join now to manage your tasks <i className="fa-solid fa-arrow-right ml-2"></i>
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-8 px-4 md:px-8">
-          <h1 className="text-2xl font-semibold mt-6">👋 Welcome, {user.name}</h1>
-
-          {/* Weekly Graph Section */}
-          <section>
-            <h2 className="text-xl font-medium mb-2">📈 Weekly Task Completion</h2>
-            <div className="bg-white shadow-md rounded-lg p-4">
-              <TaskCompletionGraph data={graphData} />
+      <div className="bg-gray-50 min-h-screen pt-8 pb-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
+            👋 Welcome, {user?.name || "User"}
+          </h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            {/* Calendar Card */}
+            <div className="bg-white rounded-xl shadow p-8 flex flex-col items-center w-full min-h-[420px]">
+              <div className="flex items-center mb-4">
+                <FaCalendarAlt className="text-blue-500 text-2xl mr-2" />
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Calendar
+                </h2>
+              </div>
+              <div className="w-full max-w-lg">
+                <AdvancedCalendar />
+              </div>
             </div>
-          </section>
-
-          {/* Stats Cards Section */}
-          <section>
-            <StatsCards />
-          </section>
-
-          {/* Task List Section */}
-          <section>
-            <h2 className="text-xl font-medium mb-2">📋 Your Tasks</h2>
-            <Tasks />
-          </section>
+            {/* Graph Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col w-full min-h-[420px]">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <FaChartBar className="text-green-500 text-2xl mr-2" />
+                  <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                    Weekly Task Completion
+                  </h2>
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Last 7 days
+                </div>
+              </div>
+              <div className="flex-1 w-full">
+                <TaskCompletionGraph data={graphData} />
+              </div>
+            </div>
+          </div>
+          {/* Stats and Tasks */}
+          <div className="mt-10">
+            <StatsCards statsRefreshKey={statsRefreshKey} />
+            <section className="mt-8">
+              <h2 className="text-xl font-medium mb-4">📋 Your Tasks</h2>
+              <Tasks onTaskChange={() => setStatsRefreshKey((k) => k + 1)} />
+            </section>
+          </div>
         </div>
-      )}
+      </div>
     </MainLayout>
   );
 };

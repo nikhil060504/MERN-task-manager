@@ -1,45 +1,112 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import Task from "./pages/Task";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { saveProfile } from "./redux/actions/authActions";
+import { LOGOUT } from "./redux/actions/actionTypes";
 import NotFound from "./pages/NotFound";
-import AddTask from "./pages/AddTask";
-import EditTask from './pages/EditTask'; // adjust path if it's different
+import Navbar from "./components/Navbar";
 
-function App() {
+const isTokenExpired = (token) => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
 
-  const authState = useSelector(state => state.authReducer);
+// Separate component for protected routes to prevent unnecessary re-renders
+const ProtectedRoute = ({ children }) => {
+  const authState = useSelector((state) => state.auth);
+  const location = useLocation();
+
+  const isAuthenticated = useMemo(() => {
+    return authState.isLoggedIn && authState.user;
+  }, [authState.isLoggedIn, authState.user]);
+
+  // Optionally, add loading state here in the future
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Separate component for public routes
+const PublicRoute = ({ children }) => {
+  const authState = useSelector((state) => state.auth);
+  const location = useLocation();
+
+  const isAuthenticated = useMemo(() => {
+    return authState.isLoggedIn && authState.user;
+  }, [authState.isLoggedIn, authState.user]);
+
+  if (isAuthenticated) {
+    const from = location.state?.from?.pathname || "/";
+    return <Navigate to={from} replace />;
+  }
+
+  return children;
+};
+
+const App = () => {
   const dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
+  const token = authState?.token;
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    dispatch(saveProfile(token));
-  }, [authState.isLoggedIn, dispatch]);
-
+    if (token) {
+      if (isTokenExpired(token)) {
+        dispatch({ type: LOGOUT });
+        localStorage.removeItem("token");
+      } else {
+        dispatch(saveProfile(token));
+      }
+    }
+  }, [token, dispatch]);
 
   return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signup" element={authState.isLoggedIn ? <Navigate to="/" /> : <Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/tasks" element={authState.isLoggedIn ? <Task /> : <Navigate to="/login" />} />
-       {/*    <Route path="/tasks/add" element={<AddTask />} /> */}
-       <Route path="/tasks/:id" element={<EditTask />} />
-
-          <Route path="/tasks/add" element={authState.isLoggedIn ? <AddTask /> : <Navigate to="/login" state={{ redirectUrl: "/tasks/add" }} />} />
-          <Route path="/tasks/:taskId" element={authState.isLoggedIn ? <Task /> : <Navigate to="/login" state={{ redirectUrl: window.location.pathname }} />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </>
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;
