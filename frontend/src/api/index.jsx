@@ -13,8 +13,8 @@ import { LOGOUT } from "../redux/actions/actionTypes";
 
 const baseURL =
   process.env.NODE_ENV === "production"
-    ? "/api" // In production, use relative URL
-    : "http://localhost:5000/api"; // In development, use full URL
+    ? "https://mern-task-manager-yf33.onrender.com/" // full URL to backend
+    : "http://localhost:5000/api";
 
 const api = axios.create({
   baseURL,
