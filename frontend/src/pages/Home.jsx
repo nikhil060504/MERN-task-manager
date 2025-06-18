@@ -7,7 +7,7 @@ import MainLayout from "../layouts/MainLayout";
 import StatsCards from "../components/StatsCards";
 import TaskCompletionGraph from "../components/TaskCompletionGraph";
 import { FaCalendarAlt, FaChartBar } from "react-icons/fa";
-
+import api from "../api/index";
 const Home = () => {
   const authState = useSelector((state) => state.auth) || {
     isLoggedIn: false,
@@ -24,7 +24,7 @@ const Home = () => {
       isLoggedIn && user ? `${user.name}'s tasks` : "Task Manager";
     const fetchGraphData = async () => {
       try {
-        const res = await axios.get("/api/tasks/completion-graph", {
+        const res = await api.get("/tasks/completion-graph", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGraphData(res.data);

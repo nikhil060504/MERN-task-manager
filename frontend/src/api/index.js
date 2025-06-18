@@ -1,11 +1,4 @@
-// import axios from "axios";
 
-// const api = axios.create({
-//   baseURL: "/api",
-// });
-// export default api;
-
-// components/api.js
 
 import axios from "axios";
 import store from "../redux/store";
