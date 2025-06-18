@@ -197,49 +197,7 @@ exports.getTasks = async (req, res) => {
 
 
 // GET /tasks?status=completed&sortBy=dueDate&order=asc
-exports.getAllTasks = async (req, res) => {
-  try {
-    const { status, sortBy = "createdAt", order = "desc" } = req.query;
-    const query = { user: req.user._id };
 
-    if (status) query.status = status;
-
-    const sortOrder = order === "asc" ? 1 : -1;
-    const tasks = await Task.find(query).sort({ [sortBy]: sortOrder });
-
-    res.json({ tasks });
-  } catch (error) {
-    res.status(500).json({ msg: "Server error", error: error.message });
-  }
-};
-
-
-exports.getTaskStats = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const tasks = await Task.find({ user: userId });
-
-    const statusCount = {};
-    const categoryCount = {};
-    const priorityCount = {};
-
-    tasks.forEach(task => {
-      statusCount[task.status] = (statusCount[task.status] || 0) + 1;
-      categoryCount[task.category] = (categoryCount[task.category] || 0) + 1;
-      priorityCount[task.priority] = (priorityCount[task.priority] || 0) + 1;
-    });
-
-    res.status(200).json({
-      totalTasks: tasks.length,
-      statusCount,
-      categoryCount,
-      priorityCount,
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch stats', error: err.message });
-  }
-};
 
 exports.getTaskById = async (req, res) => {
   try {
@@ -265,6 +223,9 @@ exports.updateTask = async (req, res) => {
     if (task.user.toString() !== req.user._id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
+if (req.body.isCompleted === true && task.isCompleted === false) {
+  task.completedAt = new Date();
+}
 
     // Update the fields with the request body
     Object.assign(task, req.body);
@@ -326,3 +287,104 @@ exports.sendReminders = async (req, res) => {
     res.status(500).json({ message: "Failed to send reminders", error: err.message });
   }
 };
+
+
+
+
+exports.getTaskStats = async (req, res) => {
+  try {
+    console.log("🔥 getStats called");
+    console.log("🧑 req.user =", req.user);
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ msg: 'Unauthorized - No user' });
+    }
+
+    console.time("📊 Count Total");
+    const total = await Task.countDocuments({ user: req.user._id });
+    console.timeEnd("📊 Count Total");
+
+    console.time("✅ Count Completed");
+    const completed = await Task.countDocuments({ user: req.user._id, status: 'completed' });
+    console.timeEnd("✅ Count Completed");
+
+    console.time("🕐 Count Pending");
+    const pending = await Task.countDocuments({ user: req.user._id, status: 'pending' });
+    console.timeEnd("🕐 Count Pending");
+
+    console.time("🔁 Count Recurring");
+    const recurring = await Task.countDocuments({
+      user: req.user._id,
+      reminderDate: { $ne: null }
+    });
+    console.timeEnd("🔁 Count Recurring");
+
+    return res.json({ total, completed, pending, recurring });
+  } catch (error) {
+    console.error("❌ Error in getStats:", error);
+    return res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+
+
+exports.getTaskCompletionGraph = async (req, res) => {
+  try {
+   const userId = req.user._id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const past7Days = [...Array(7)].map((_, i) => {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      return date.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    }).reverse();
+
+    const stats = await Task.aggregate([
+      {
+        $match: {
+          user: req.userId,
+          isCompleted: true,
+          completedAt: { $gte: new Date(past7Days[0]) },
+        },
+      },
+      {
+        $project: {
+          date: {
+            $dateToString: { format: "%Y-%m-%d", date: "$completedAt" }
+          }
+        },
+      },
+      {
+        $group: {
+          _id: "$date",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const formatted = past7Days.map((date) => {
+      const found = stats.find((d) => d._id === date);
+      return { date, count: found ? found.count : 0 };
+    });
+
+    res.status(200).json(formatted);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching graph data", error: err.message });
+  }
+};
+
+// controllers/calendarController.js
+
+exports.holidays = require("../data/holidays");
+
+// Get all holidays and festivals
+exports.getCalendarEvents = async (req, res) => {
+  try {
+    return res.status(200).json({ success: true, events: holidays });
+  } catch (error) {
+    console.error("❌ Error in getCalendarEvents:", error);
+    return res.status(500).json({ success: false, msg: "Server error" });
+  }
+};
+

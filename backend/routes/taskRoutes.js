@@ -14,29 +14,40 @@
 
 
 const express = require("express");
-const { createTask, getTasks,getAllTasks, getTaskStats, updateTask, deleteTask,getTaskById } = require("../controllers/taskControllers");
+const { createTask, getTasks, getTaskStats, updateTask, deleteTask,getTaskById,getTaskCompletionGraph,getCalenderEvents } = require("../controllers/taskControllers");
 const authMiddleware = require("../middleware/authMiddleware");
-
+//const { protect } = require('../middleware/index');
 const router = express.Router();
 
-
-const { verifyAccessToken } = require('../middleware/index.js');
+ //router.use(protect);
+const { verifyAccessToken } = require('../middleware/index');
 
 
 const { sendReminders } = require("../controllers/taskControllers");
 router.get("/send-reminders", verifyAccessToken, sendReminders);
-
+ router.get('/stats',authMiddleware, getTaskStats);
 router.post("/", verifyAccessToken, createTask);
 
-router.get("/", authMiddleware, getTasks);
-router.get("/:id", authMiddleware, getTaskById); 
-router.get("/", authMiddleware, getAllTasks); 
-router.get('/stats', authMiddleware, getTaskStats);
+ router.get("/", authMiddleware, getTasks);
+ // This must be before any protected route
+router.get("/events", authMiddleware, getCalendarEvents);
+ router.get('/completion-graph', verifyAccessToken, getTaskCompletionGraph);
+
+ router.get("/:id", authMiddleware, getTaskById); 
+ // router.get("/", authMiddleware, getAllTasks); 
+
 
 
 router.put("/:id", authMiddleware, updateTask);
 
-router.delete("/:id", authMiddleware, deleteTask);
+ router.delete("/:id", authMiddleware, deleteTask);
+
+
+
+
+
+// Protected Routes
+
 
 module.exports = router;
 

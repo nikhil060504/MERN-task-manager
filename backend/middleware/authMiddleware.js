@@ -27,7 +27,9 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req.user = { _id: decoded.id, role: decoded.role };  // ← required!
+    console.log("✅ Token Decoded:", decoded);          // <--- Move here
+    req.user = { _id: decoded.id || decoded._id, role: decoded.role };
+    console.log("✅ req.user set as:", req.user);        // <--- And here
     next();
   } catch (err) {
     res.status(401).json({ msg: "Invalid token" });
@@ -35,3 +37,4 @@ const authMiddleware = (req, res, next) => {
 };
 
 module.exports = authMiddleware;
+

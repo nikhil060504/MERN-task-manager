@@ -93,16 +93,24 @@ const taskSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  completedAt: {
+    type: Date,
+  },
   reminderSent: {
     type: Boolean,
     default: false,
   },
   lastReminderSentAt: {
-  type: Date,
-  default: null
-},
+    type: Date,
+    default: null,
+  },
+
+  // ✅ Add this:
+  isRecurring: {
+    type: Boolean,
+    default: false,
+  },
 
 }, { timestamps: true });
 
 module.exports = mongoose.model('Task', taskSchema);
-
