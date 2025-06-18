@@ -40,7 +40,7 @@ const TaskCompletionGraph = ({ data = []}) => {
       <div className="flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={Array.isArray(data) ? data:[]}
+            data={data}
             margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
           >
             <CartesianGrid
@@ -86,8 +86,7 @@ const TaskCompletionGraph = ({ data = []}) => {
               name="Completed Tasks"
               radius={[6, 6, 0, 0]}
             >
-              { Array.isArray(data) &&
-              data.map((entry, index) => (
+              {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.isToday ? todayColor : normalColor}
