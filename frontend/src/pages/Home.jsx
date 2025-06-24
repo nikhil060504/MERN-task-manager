@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import api from "../api/index";
 import AdvancedCalendar from "../components/AdvancedCalendar";
 import Tasks from "../components/Tasks";
 import MainLayout from "../layouts/MainLayout";
@@ -24,7 +24,7 @@ const Home = () => {
       isLoggedIn && user ? `${user.name}'s tasks` : "Task Manager";
     const fetchGraphData = async () => {
       try {
-        const res = await axios.get("/api/tasks/completion-graph", {
+        const res = await api.get("/tasks/completion-graph", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGraphData(res.data);
@@ -39,7 +39,7 @@ const Home = () => {
   useEffect(() => {
     const fetchGraphData = async () => {
       try {
-        const res = await axios.get("/api/tasks/completion-graph", {
+        const res = await api.get("/tasks/completion-graph", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGraphData(res.data);

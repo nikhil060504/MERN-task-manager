@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../api";
+import api from "../api/index";
 
 const StatsCards = ({ statsRefreshKey }) => {
   const [stats, setStats] = useState(null);
