@@ -22,14 +22,6 @@ export const postLoginData = (email, password) => async (dispatch) => {
 
     // Store token in localStorage
     localStorage.setItem("token", data.token);
-<<<<<<< HEAD
-    // Debug: log the token value after saving
-    console.log(
-      "[FRONTEND LOGIN] Token saved to localStorage:",
-      localStorage.getItem("token")
-    );
-=======
->>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 
     // Dispatch success action with all necessary data
     dispatch({
@@ -78,14 +70,8 @@ export const saveProfile = (token) => async (dispatch) => {
       },
     });
   } catch (error) {
-    console.error("Profile fetch failed:", error.message);
-    // Clear invalid token
-    localStorage.removeItem("token");
-    dispatch({
-      type: "LOGOUT",
-      payload: { msg: "Session expired. Please login again." },
-    });
-    throw error;
+    console.error("Profile fetch error:", error);
+    toast.error(error.message || "Failed to load profile");
   }
 };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTasks, addTask } from "../redux/actions/taskActions";
 import TaskCard from "./TaskCard";
@@ -36,15 +36,12 @@ const Tasks = ({ onTaskChange }) => {
   const fetchTasksData = useCallback(() => {
     dispatch(fetchTasks());
   }, [dispatch]);
-<<<<<<< HEAD
 
   // Expose fetchTasksData to TaskCard via prop
   const handleTaskListChange = () => {
     fetchTasksData();
     if (onTaskChange) onTaskChange();
   };
-=======
->>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 
   useEffect(() => {
     fetchTasksData();
@@ -376,15 +373,11 @@ const Tasks = ({ onTaskChange }) => {
 
       <div className="bg-gray-50 rounded-xl p-6 shadow-inner grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAndSortedTasks.map((task) => (
-<<<<<<< HEAD
           <TaskCard
             key={task.id || task._id}
             task={task}
             onTaskChange={handleTaskListChange}
           />
-=======
-          <TaskCard key={task._id} task={task} onTaskChange={onTaskChange} />
->>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
         ))}
         {filteredAndSortedTasks.length === 0 && (
           <div className="col-span-full text-center text-gray-500 py-8">
