@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   Label,
   Cell,
 } from "recharts";
@@ -33,7 +32,6 @@ const TaskCompletionGraph = ({ data = [] }) => {
   // Colors for bars
   const normalColor = "#3B82F6"; // blue-500
   const todayColor = "#2563EB"; // blue-600
-  const hoverColor = "#1D4ED8"; // blue-700
 
   return (
     <div className="w-full h-full min-h-[300px] flex flex-col">

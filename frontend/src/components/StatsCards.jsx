@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../api";
 
 const StatsCards = ({ statsRefreshKey }) => {

@@ -4,7 +4,6 @@ import {
   LOGIN_REQUEST,
   LOGIN_SUCCESS,
   LOGOUT,
-  SAVE_PROFILE,
 } from "./actionTypes";
 import { toast } from "react-toastify";
 
