@@ -7,9 +7,11 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const limiter = require("./middleware/rateLimiter");
 
 app.use(express.json());
 app.use(cors());
+app.use(limiter);
 
 const sequelize = require("./config/db");
 
