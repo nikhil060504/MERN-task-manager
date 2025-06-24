@@ -6,7 +6,7 @@ import { LOGOUT } from "../redux/actions/actionTypes";
 
 const baseURL =
   process.env.NODE_ENV === "production"
-    ? "https://mern-task-manager-1-flhe.onrender.com/api" // full URL to backend
+    ? "https://mern-task-manager-2-45u8.onrender.com" // full URL to backend
     : "http://localhost:5000/api";
 
 const api = axios.create({
