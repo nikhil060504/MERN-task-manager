@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from "react";
-<<<<<<< HEAD
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import api from "../api";
-=======
-import api from "../api/index";
->>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 
 const StatsCards = ({ statsRefreshKey }) => {
   const [stats, setStats] = useState(null);
