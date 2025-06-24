@@ -54,7 +54,11 @@ const authMiddleware = async (req, res, next) => {
         return res.status(401).json({ msg: "Invalid token content" });
       }
 
+<<<<<<< HEAD
       const user = await User.findByPk(userId);
+=======
+      const user = await User.findById(userId);
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       if (!user) {
         console.log("[authMiddleware] User not found:", userId);
         return res.status(401).json({ msg: "User not found" });
@@ -64,7 +68,11 @@ const authMiddleware = async (req, res, next) => {
       req.user = user;
       console.log(
         "[authMiddleware] Authentication successful for user:",
+<<<<<<< HEAD
         user.id // Sequelize uses 'id', not '_id'
+=======
+        user._id
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       );
       next();
     } catch (jwtError) {

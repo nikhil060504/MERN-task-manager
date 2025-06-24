@@ -12,6 +12,7 @@ const profileRoutes = require("./routes/profileRoutes");
 app.use(express.json());
 app.use(cors());
 
+<<<<<<< HEAD
 // const mongoUrl = process.env.MONGODB_URL;
 // mongoose.connect(mongoUrl, (err) => {
 //   if (err) throw err;
@@ -24,6 +25,13 @@ sequelize.sync({ alter: true }) // creates or alters tables
   .then(() => console.log("✅ MySQL Database Synced"))
   .catch((err) => console.error("❌ Sync Error:", err));
 
+=======
+const mongoUrl = process.env.MONGODB_URL;
+mongoose.connect(mongoUrl, (err) => {
+  if (err) throw err;
+  console.log("Mongodb connected...");
+});
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);

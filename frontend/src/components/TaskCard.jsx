@@ -35,10 +35,14 @@ const TaskCard = ({ task, onTaskChange }) => {
   })();
 
   const handleDelete = () => {
+<<<<<<< HEAD
     dispatch(deleteTask(task.id)).then(() => {
       if (typeof window !== "undefined" && window.fetchTasksData) {
         window.fetchTasksData();
       }
+=======
+    dispatch(deleteTask(task._id)).then(() => {
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       if (onTaskChange) onTaskChange();
     });
     toast.success("Task deleted successfully!");
@@ -46,26 +50,56 @@ const TaskCard = ({ task, onTaskChange }) => {
 
   const handleStatusChange = async (e) => {
     try {
+<<<<<<< HEAD
       e.stopPropagation();
+=======
+      // Stop event propagation to prevent card click
+      e.stopPropagation();
+
+      // Toggle status correctly based on current status
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       let newStatus;
       if (task.status === "completed") {
         newStatus = "pending";
       } else if (task.status === "pending") {
         newStatus = "completed";
       } else {
+<<<<<<< HEAD
         newStatus = "completed";
       }
+=======
+        newStatus = "completed"; // Default to completed if in any other state
+      }
+
+      // Log the status change
+      console.log("[TaskCard] Status change:", {
+        oldStatus: task.status,
+        newStatus,
+        taskId: task._id,
+      });
+
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       const updatedData = {
         ...task,
         status: newStatus,
         completedAt:
           newStatus === "completed" ? new Date().toISOString() : null,
       };
+<<<<<<< HEAD
       await dispatch(updateTask(task.id, updatedData));
       toast.success(`Task marked as ${newStatus}`);
       if (typeof window !== "undefined" && window.fetchTasksData) {
         window.fetchTasksData();
       }
+=======
+
+      await dispatch(updateTask(task._id, updatedData));
+
+      // Immediately show feedback
+      toast.success(`Task marked as ${newStatus}`);
+
+      // Refresh task list to update counts
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       if (onTaskChange) onTaskChange();
     } catch (error) {
       console.error("Failed to update task status:", error);
@@ -114,11 +148,16 @@ const TaskCard = ({ task, onTaskChange }) => {
 
   const handleUpdate = async () => {
     try {
+<<<<<<< HEAD
       await dispatch(updateTask(task.id, editTask));
       setIsEditing(false);
       if (typeof window !== "undefined" && window.fetchTasksData) {
         window.fetchTasksData();
       }
+=======
+      await dispatch(updateTask(task._id, editTask));
+      setIsEditing(false);
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
       if (onTaskChange) onTaskChange();
       toast.success("Task updated successfully");
     } catch (error) {

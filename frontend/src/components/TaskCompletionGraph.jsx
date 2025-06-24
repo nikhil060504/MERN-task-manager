@@ -29,7 +29,11 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
+<<<<<<< HEAD
 const TaskCompletionGraph = ({ data }) => {
+=======
+const TaskCompletionGraph = ({ data = []}) => {
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
   // Colors for bars
   const normalColor = "#3B82F6"; // blue-500
   const todayColor = "#2563EB"; // blue-600
@@ -85,6 +89,7 @@ const TaskCompletionGraph = ({ data }) => {
               dataKey="completed"
               name="Completed Tasks"
               radius={[6, 6, 0, 0]}
+<<<<<<< HEAD
               label={{
                 position: "top",
                 fill: "#2563EB",
@@ -92,12 +97,18 @@ const TaskCompletionGraph = ({ data }) => {
                 fontSize: 16,
                 formatter: (value) => (value > 0 ? value : ""),
               }}
+=======
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
             >
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.isToday ? todayColor : normalColor}
+<<<<<<< HEAD
                   className={entry.isToday ? "ring-2 ring-blue-600" : ""}
+=======
+                  className="hover:fill-blue-700 transition-colors"
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
                 />
               ))}
             </Bar>

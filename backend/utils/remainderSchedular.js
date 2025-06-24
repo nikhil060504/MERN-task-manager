@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // const Task = require("../models/Task");
 // const sendEmail = require("./email");
 // const User = require("../models/User");
@@ -68,11 +69,30 @@ const checkReminders = async () => {
     const user = task.User;
     if (!user?.email) continue;
 
+=======
+const Task = require("../models/Task");
+const sendEmail = require("./email");
+const User = require("../models/User");
+
+const checkReminders = async () => {
+  const now = new Date();
+  // Find tasks where reminder has not been sent, and the due date/time is now or past
+  const tasks = await Task.find({
+    status: { $ne: "completed" },
+    reminderSent: false,
+    dueDate: { $ne: null },
+  }).populate("user", "email");
+
+  for (const task of tasks) {
+    if (!task.user?.email) continue;
+    // Combine dueDate and dueTime for comparison
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
     let dueDateTime = new Date(task.dueDate);
     if (task.dueTime) {
       const [hours, minutes] = task.dueTime.split(":");
       dueDateTime.setHours(Number(hours), Number(minutes), 0, 0);
     }
+<<<<<<< HEAD
 
     if (now >= dueDateTime) {
       await sendEmail(
@@ -80,6 +100,15 @@ const checkReminders = async () => {
         `⏰ Reminder: Task "${task.title}" is due`,
         `Your task "${task.title}" is still pending.\n\nDescription: ${
           task.description || "No description"
+=======
+    // If now is after or equal to dueDateTime, send reminder
+    if (now >= dueDateTime) {
+      await sendEmail(
+        task.user.email,
+        `⏰ Reminder: Task "${task.title}" is due`,
+        `Your task "${task.title}" is still pending.\n\nDescription: ${
+          task.description
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
         }\nDue Date: ${dueDateTime.toLocaleString()}`
       );
       task.reminderSent = true;

@@ -7,7 +7,11 @@ import MainLayout from "../layouts/MainLayout";
 import StatsCards from "../components/StatsCards";
 import TaskCompletionGraph from "../components/TaskCompletionGraph";
 import { FaCalendarAlt, FaChartBar } from "react-icons/fa";
+<<<<<<< HEAD
 
+=======
+import api from "../api/index";
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 const Home = () => {
   const authState = useSelector((state) => state.auth) || {
     isLoggedIn: false,
@@ -24,7 +28,11 @@ const Home = () => {
       isLoggedIn && user ? `${user.name}'s tasks` : "Task Manager";
     const fetchGraphData = async () => {
       try {
+<<<<<<< HEAD
         const res = await axios.get("/api/tasks/completion-graph", {
+=======
+        const res = await api.get("/tasks/completion-graph", {
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
           headers: { Authorization: `Bearer ${token}` },
         });
         setGraphData(res.data);
@@ -34,6 +42,7 @@ const Home = () => {
     };
     if (isLoggedIn && token) fetchGraphData();
   }, [isLoggedIn, token, user]);
+<<<<<<< HEAD
 
   // Add this effect to refresh the graph when statsRefreshKey changes
   useEffect(() => {
@@ -49,6 +58,8 @@ const Home = () => {
     };
     if (isLoggedIn && token) fetchGraphData();
   }, [statsRefreshKey, isLoggedIn, token]);
+=======
+>>>>>>> bafbc4df1e11bab2a9e39d4807b61aaeb7b2a30d
 
   return (
     <MainLayout>
