@@ -12,31 +12,35 @@
 
 // module.exports = router;
 
-
 const express = require("express");
-const { createTask, getTasks,getAllTasks, getTaskStats, updateTask, deleteTask,getTaskById } = require("../controllers/taskControllers");
+const {
+  createTask,
+  getTasks,
+  getTaskStats,
+  updateTask,
+  deleteTask,
+  getTaskById,
+  getTaskCompletionGraph,
+  getCalenderEvents,
+  bulkCreateTasks,
+  sendReminders,
+} = require("../controllers/taskControllers");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+// Use authMiddleware consistently for all routes
+router.get("/stats", authMiddleware, getTaskStats);
+router.get("/send-reminders", authMiddleware, sendReminders);
+router.get("/events", authMiddleware, getCalenderEvents);
+router.get("/completion-graph", authMiddleware, getTaskCompletionGraph);
 
-const { verifyAccessToken } = require('../middleware/index.js');
-
-
-const { sendReminders } = require("../controllers/taskControllers");
-router.get("/send-reminders", verifyAccessToken, sendReminders);
-
-router.post("/", verifyAccessToken, createTask);
-
+// CRUD operations
 router.get("/", authMiddleware, getTasks);
-router.get("/:id", authMiddleware, getTaskById); 
-router.get("/", authMiddleware, getAllTasks); 
-router.get('/stats', authMiddleware, getTaskStats);
-
-
+router.post("/", authMiddleware, createTask);
+router.post("/bulk", authMiddleware, bulkCreateTasks);
+router.get("/:id", authMiddleware, getTaskById);
 router.put("/:id", authMiddleware, updateTask);
-
 router.delete("/:id", authMiddleware, deleteTask);
 
 module.exports = router;
-

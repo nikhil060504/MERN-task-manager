@@ -1,70 +1,24 @@
-// const jwt = require("jsonwebtoken");
-// const User = require("../models/User");
-
-// exports.verifyAccessToken = async (req, res, next) => {
-//   const authHeader = req.header("Authorization");
-
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     return res.status(400).json({ status: false, msg: "Invalid token format" });
-//   }
-
-//   const token = authHeader.split(" ")[1]; // Extract the token
-
-//   let userPayload;
-//   try {
-//     userPayload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-//   } catch (err) {
-//     return res.status(401).json({ status: false, msg: "Invalid token" });
-//   }
-
-//   try {
-//     const user = await User.findById(userPayload.id);
-//     if (!user) {
-//       return res.status(401).json({ status: false, msg: "User not found" });
-//     }
-
-//     req.user = user; // Attach user to request object
-//     next();
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// };
-
-
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-
-
-
 exports.verifyAccessToken = async (req, res, next) => {
-  const authHeader = req.header("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(400).json({ status: false, msg: "Invalid token format" });
+  console.log("[verifyAccessToken] Incoming headers:", req.headers);
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ msg: "No token" });
   }
 
-  const token = authHeader.split(" ")[1]; // Extract actual token
-
-  let userPayload;
+  const token = authHeader.split(" ")[1];
   try {
-    userPayload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-  } catch (err) {
-    console.error("JWT Verification Error:", err.message); // Debugging log
-    return res.status(401).json({ status: false, msg: "Invalid token" });
-  }
-
-  try {
-    const user = await User.findById(userPayload.id);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findById(decoded.id || decoded._id);
     if (!user) {
-      return res.status(401).json({ status: false, msg: "User not found" });
+      return res.status(401).json({ msg: "User not found" });
     }
     req.user = user;
     next();
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ status: false, msg: "Internal Server Error" });
+    console.error("JWT Verification Error:", err);
+    return res.status(401).json({ msg: "Invalid token" });
   }
 };
-

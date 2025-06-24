@@ -1,193 +1,195 @@
-# MERN Task Manager
+# MERN Task Manager Application
 
-A MERN application for basic tasks management.
-![image](https://user-images.githubusercontent.com/86913048/227101123-f8a35258-9c21-4479-86e8-055659ab75e2.png)
+A full-stack task management application with authentication, real-time stats, recurring tasks, calendar view, and email notifications. Built with React, Redux, Tailwind CSS, Node.js, Express, and **Sequelize (MySQL/Postgres/SQLite)**.
 
-## Table of Contents
-
-- [Features](#features)
-- [Tools and Technologies](#tools-and-technologies)
-- [Dependencies](#dependencies)
-- [Dev-dependencies](#dev-dependencies)
-- [Prerequisites](#prerequisites)
-- [Installation and setup](#installation-and-setup)
-- [Backend API](#backend-api)
-- [frontend pages](#frontend-pages)
-- [npm scripts](#npm-scripts)
-- [Useful Links](#useful-links)
-- [Contact](#contact)
+---
 
 ## Features
 
-### User-side features
+- JWT authentication and role-based access control
+- Responsive UI with Tailwind CSS
+- Real-time task stats and category filters
+- Recurring tasks and calendar view
+- Daily summary emails via cron jobs and Nodemailer
+- Optimized dashboard with React useMemo and backend pagination
+- Environment-specific deployment configurations
 
-- Signup
-- Login
-- Logout
-- Add tasks
-- View tasks
-- Update tasks
-- Delete tasks
+---
 
-### Developer-side features
+## Tech Stack
 
-- Toasts for success and error messages
-- Form validations in frontend and backend
-- Fully Responsive Navbar
-- Token based Authentication
-- Use of 404 page for wrong urls
-- Relevant redirects
-- Global user state using Redux
-- Custom Loaders
-- Use of layout component for pages
-- Use of theme colors
-- No external CSS files needed (made using Tailwind CSS)
-- Usage of Tooltips
-- Dynamic document titles
-- Redirect to previous page after login
-- Use of various React hooks
-- Custom hook also used (useFetch)
-- Routes protection
-- Middleware for verifying the user in backend
-- Use of different HTTP status codes for sending responses
-- Standard pratices followed
+- **Frontend:** React, Redux, Tailwind CSS, React Big Calendar, Framer Motion
+- **Backend:** Node.js, Express, Sequelize (MySQL/Postgres/SQLite), JWT, Nodemailer, node-cron
 
-## Tools and Technologies
+---
 
-- HTML
-- CSS
-- Javascript
-- Tailwind CSS
-- Node.js
-- Express.js
-- React
-- Redux
-- Mongodb
+## Getting Started
 
-## Dependencies
+### Prerequisites
 
-Following are the major dependencies of the project:
+- Node.js (v16+ recommended)
+- MySQL, Postgres, or SQLite (configured in backend)
 
-- axios
-- react
-- react-dom
-- react-redux
-- react-router-dom
-- react-toastify
-- redux
-- redux-thunk
-- bcrypt
-- cors
-- dotenv
-- express
-- jsonwebtoken
-- mongoose
+### Installation
 
-## Dev-dependencies
+1. **Clone the repository:**
 
-Following are the major dev-dependencies of the project:
-
-- nodemon
-- concurrently
-
-## Prerequisites
-
-- Node.js must be installed on the system.
-- You should have a MongoDB database.
-- You should have a code editor (preferred: VS Code)
-
-## Installation and Setup
-
-1. Install all the dependencies
-
-   ```sh
-   npm run install-all
+   ```bash
+   git clone <your-repo-url>
+   cd MERN-task-manager
    ```
 
-2. Create a file named ".env" inside the backend folder. Add data from .env.example file and substitute your credentials there.
+2. **Install backend dependencies:**
 
-3. Start the application
-
-   ```sh
-   npm run dev
+   ```bash
+   cd backend
+   npm install
    ```
 
-4. Go to http://localhost:3000
+3. **Install frontend dependencies:**
 
-## Backend API
+   ```bash
+   cd ../frontend
+   npm install
+   ```
 
-<pre>
-- POST     /api/auth/signup
-- POST     /api/auth/login
-- GET      /api/tasks
-- GET      /api/tasks/:taskId
-- POST     /api/tasks
-- PUT      /api/tasks/:taskId
-- DELETE   /api/tasks/:taskId
-- GET      /api/profile
-</pre>
+4. **Set up environment variables:**
+   - Create a `.env` file in the `backend` folder with the following:
+     ```env
+     DB_DIALECT=mysql # or postgres or sqlite
+     DB_HOST=localhost
+     DB_PORT=3306
+     DB_NAME=taskmanager
+     DB_USER=your_db_user
+     DB_PASS=your_db_password
+     ACCESS_TOKEN_SECRET=your_jwt_secret
+     EMAIL_USER=your_email@example.com
+     EMAIL_PASS=your_email_password
+     NODE_ENV=development
+     PORT=5000
+     ```
 
-## Frontend pages
+---
 
-<pre>
-- /                 Home Screen (Public home page for guests and private dashboard (tasks) for logged-in users)
-- /signup           Signup page
-- /login            Login page
-- /tasks/add        Add new task
-- /tasks/:taskId    Edit a task
-</pre>
+## Running the Application
 
-## npm scripts
+### Start Backend
 
-At root:
+```bash
+cd backend
+npm start
+```
 
-- `npm run dev`: Starts both backend and frontend
-- `npm run dev-server`: Starts only backend
-- `npm run dev-client`: Starts only frontend
-- `npm run install-all`: Installs all dependencies and dev-dependencies required at root, at frontend and at backend.
+### Start Frontend
 
-Inside frontend folder:
+```bash
+cd frontend
+npm start
+```
 
-- `npm start`: Starts frontend in development mode
-- `npm run build`: Builds the frontend for production to the build folder
-- `npm test`: Launches the test runner in the interactive watch mode
-- `npm run eject`: This will remove the single build dependency from the frontend.
+- Frontend runs on [http://localhost:3000](http://localhost:3000)
+- Backend runs on [http://localhost:5000](http://localhost:5000)
 
-Inside backend folder:
+---
 
-- `npm run dev`: Starts backend using nodemon.
-- `npm start`: Starts backend without nodemon.
+## Folder Structure
 
-## Useful Links
+```
+MERN-task-manager/
+├── backend/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── middleware/
+│   ├── utils/
+│   ├── data/
+│   ├── app.js
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── redux/
+│   │   ├── api/
+│   │   ├── validations/
+│   │   └── index.js
+│   ├── public/
+│   ├── package.json
+│   └── tailwind.config.js
+└── README.md
+```
 
-- This project
+---
 
-  - Github Repo: https://github.com/aayush301/MERN-task-manager
+## Key Scripts
 
-- Official Docs
+### Backend
 
-  - Reactjs docs: https://reactjs.org/docs/getting-started.html
-  - npmjs docs: https://docs.npmjs.com/
-  - Mongodb docs: https://docs.mongodb.com/manual/introduction/
-  - Github docs: https://docs.github.com/en/get-started/quickstart/hello-world
+- `npm start` — Start the Express server
+- `npm run dev` — Start server with nodemon (if configured)
 
-- Youtube tutorials
+### Frontend
 
-  - Expressjs: https://youtu.be/L72fhGm1tfE
-  - React: https://youtu.be/EHTWMpD6S_0
-  - Redux: https://youtu.be/1oU_YGhT7ck
+- `npm start` — Start React development server
+- `npm run build` — Build for production
 
-- Download links
+---
 
-  - Nodejs download: https://nodejs.org/
-  - VS Code download: https://code.visualstudio.com/
+## API Endpoints (Backend)
 
-- Cheatsheets
-  - Git cheatsheet: https://education.github.com/git-cheat-sheet-education.pdf
-  - VS Code keyboard shortcuts: https://code.visualstudio.com/shortcuts/keyboard-shortcuts-windows.pdf
-  - CSS Selectors Cheatsheet: https://frontend30.com/css-selectors-cheatsheet/
+- `POST /api/auth/signup` — Register a new user
+- `POST /api/auth/login` — Login
+- `GET /api/profile` — Get user profile
+- `GET /api/tasks` — Get tasks (with filters, pagination)
+- `POST /api/tasks` — Create a task
+- `PUT /api/tasks/:id` — Update a task
+- `DELETE /api/tasks/:id` — Delete a task
+- `POST /api/tasks/bulk` — Bulk create tasks
+- `GET /api/tasks/events` — Get calendar events
+- `GET /api/tasks/stats` — Get task stats
+- `GET /api/tasks/completion-graph` — Get weekly completion graph
+
+---
+
+## Environment Variables
+
+- `DB_DIALECT` — Database dialect (mysql, postgres, sqlite)
+- `DB_HOST` — Database host
+- `DB_PORT` — Database port
+- `DB_NAME` — Database name
+- `DB_USER` — Database user
+- `DB_PASS` — Database password
+- `ACCESS_TOKEN_SECRET` — JWT secret
+- `EMAIL_USER` — Email for sending notifications
+- `EMAIL_PASS` — Email password/app password
+- `NODE_ENV` — Environment (development/production)
+- `PORT` — Backend server port
+
+---
+
+## Deployment
+
+- Use environment-specific `.env` files for production and development
+- Build frontend with `npm run build` and serve with Express in production
+- Configure email and database credentials securely
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Credits
+
+- [React Big Calendar](https://github.com/jquense/react-big-calendar)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [Nodemailer](https://nodemailer.com/)
+
+---
 
 ## Contact
 
-- Email: aayush5521186@gmail.com
-- Linkedin: https://www.linkedin.com/in/aayush12/
+For questions or support, please open an issue or contact the maintainer.

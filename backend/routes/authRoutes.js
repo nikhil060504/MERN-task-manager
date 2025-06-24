@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { signup, login } = require("../controllers/authControllers");
-const rateLimiter = require('../middleware/rateLimiter');
+const rateLimiter = require("../middleware/rateLimiter");
 
 // Routes beginning with /api/auth
 console.log("✅ Auth routes loaded");

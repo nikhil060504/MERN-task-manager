@@ -1,12 +1,9 @@
-const rateLimit = require('express-rate-limit');
+const rateLimit = require("express-rate-limit");
 
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipFailedRequests: true, // optional, helps avoid blocking failed attempts
-  keyGenerator: (req) => req.ip || req.connection.remoteAddress || "127.0.0.1", // fallback IP
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again after 15 minutes",
 });
 
-module.exports = authRateLimiter;
+module.exports = limiter;
