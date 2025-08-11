@@ -328,6 +328,27 @@ exports.updateTask = async (req, res) => {
     // Handle status change completion date
     if (updates.status === "completed" && task.status !== "completed") {
       updates.completedAt = new Date();
+      
+      // Send email notification when task is completed
+      try {
+        const sendEmail = require('../utils/email');
+        // Force email to patidarnikhil314@gmail.com for testing
+        const userEmail = "patidarnikhil314@gmail.com";
+        console.log(`🎯 Sending completion email to ${userEmail} (original user: ${req.user.email}) for task ${task._id}`);
+        
+        const emailSubject = "✅ Task Completed Successfully";
+        const emailText = `Congratulations! Your task "${task.title}" has been marked as completed.\n\nTask Details:\nTitle: ${task.title}\nDescription: ${task.description || 'No description'}\nCompleted on: ${new Date().toLocaleString()}\n\nThank you for using our Task Manager!`;
+        
+        const emailSent = await sendEmail(userEmail, emailSubject, emailText);
+        if (emailSent) {
+          console.log(`✅ Completion email sent successfully to ${userEmail} for task ${task._id}`);
+        } else {
+          console.log(`❌ Failed to send completion email to ${userEmail} for task ${task._id}`);
+        }
+      } catch (emailError) {
+        console.error("❌ Failed to send completion email:", emailError);
+        // Continue with task update even if email fails
+      }
     } else if (updates.status && updates.status !== "completed") {
       updates.completedAt = null;
     }
