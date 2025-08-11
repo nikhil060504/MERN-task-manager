@@ -1,4 +1,3 @@
-const { Op } = require("sequelize");
 const Task = require("../models/Task");
 const User = require("../models/User");
 const sendEmail = require("../utils/email");
@@ -19,7 +18,7 @@ exports.createTask = async (req, res) => {
     } = req.body;
 
     const task = await Task.create({
-      userId: req.user.id,
+      userId: req.user._id || req.user.id,
       title,
       description,
       status,
@@ -37,7 +36,7 @@ exports.createTask = async (req, res) => {
   }
 };
 
-// ✅ GET TASKS (with filtering, pagination, search)
+// ✅ GET TASKS (with filtering, pagination, search, and date filtering)
 exports.getTasks = async (req, res) => {
   try {
     const {
@@ -49,27 +48,112 @@ exports.getTasks = async (req, res) => {
       page = 1,
       limit = 10,
       search,
+      dateFilter,
+      startDate,
+      endDate,
+      day,
+      month,
+      year,
     } = req.query;
 
-    const filter = { userId: req.user.id };
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
-    if (category) filter.category = category;
+    const filter = { userId: req.user._id || req.user.id };
+
+    // Status, priority, category filters
+    if (status && status !== "all") filter.status = status;
+    if (priority && priority !== "all") filter.priority = priority;
+    if (category && category !== "all") filter.category = category;
+
+    // Search filter
     if (search) {
-      filter[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
       ];
     }
 
-    const offset = (page - 1) * limit;
+    // Date filtering logic
+    if (dateFilter || startDate || endDate || day || month || year) {
+      filter.dueDate = {};
 
-    const { rows: tasks, count: total } = await Task.findAndCountAll({
-      where: filter,
-      order: [[sortBy, order.toUpperCase()]],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
+      if (dateFilter === "today") {
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+        filter.dueDate = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateFilter === "week") {
+        const today = new Date();
+        const startOfWeek = new Date(
+          today.setDate(today.getDate() - today.getDay())
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        filter.dueDate = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateFilter === "month") {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        );
+        filter.dueDate = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (startDate && endDate) {
+        filter.dueDate = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate + "T23:59:59.999Z"),
+        };
+      } else if (startDate) {
+        filter.dueDate = { $gte: new Date(startDate) };
+      } else if (endDate) {
+        filter.dueDate = { $lte: new Date(endDate + "T23:59:59.999Z") };
+      }
+
+      // Specific day, month, year filtering
+      if (day || month || year) {
+        const dateQuery = {};
+        if (year)
+          dateQuery.$expr = {
+            ...(dateQuery.$expr || {}),
+            $eq: [{ $year: "$dueDate" }, parseInt(year)],
+          };
+        if (month)
+          dateQuery.$expr = {
+            ...(dateQuery.$expr || {}),
+            $eq: [{ $month: "$dueDate" }, parseInt(month)],
+          };
+        if (day)
+          dateQuery.$expr = {
+            ...(dateQuery.$expr || {}),
+            $eq: [{ $dayOfMonth: "$dueDate" }, parseInt(day)],
+          };
+
+        // Merge with existing date filter
+        if (Object.keys(filter.dueDate).length > 0) {
+          filter.$and = [{ dueDate: filter.dueDate }, dateQuery];
+          delete filter.dueDate;
+        } else {
+          Object.assign(filter, dateQuery);
+        }
+      }
+    }
+
+    const skip = (page - 1) * limit;
+    const sortOrder = order === "asc" ? 1 : -1;
+    const sortObj = { [sortBy]: sortOrder };
+
+    const tasks = await Task.find(filter)
+      .sort(sortObj)
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .populate("userId", "name email");
+
+    const total = await Task.countDocuments(filter);
 
     res.status(200).json({
       tasks,
@@ -78,6 +162,7 @@ exports.getTasks = async (req, res) => {
       pages: Math.ceil(total / limit),
     });
   } catch (error) {
+    console.error("[getTasks] Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -86,11 +171,9 @@ exports.getTasks = async (req, res) => {
 exports.getTaskById = async (req, res) => {
   try {
     const task = await Task.findOne({
-      where: {
-        id: req.params.id,
-        userId: req.user.id,
-      },
-    });
+      _id: req.params.id,
+      userId: req.user._id || req.user.id,
+    }).populate("userId", "name email");
 
     if (!task) return res.status(404).json({ message: "Task not found" });
 
@@ -106,13 +189,14 @@ exports.getTaskById = async (req, res) => {
 exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findOne({
-      where: { id: req.params.id, userId: req.user.id },
+      _id: req.params.id,
+      userId: req.user._id || req.user.id,
     });
 
     if (!task) {
       console.log("[updateTask] Task not found or access denied", {
         id: req.params.id,
-        userId: req.user.id,
+        userId: req.user._id || req.user.id,
       });
       return res
         .status(404)
@@ -142,39 +226,21 @@ exports.updateTask = async (req, res) => {
     // Debug: log status and completedAt logic
     if (updates.status === "completed" && task.status !== "completed") {
       updates.completedAt = new Date();
-<<<<<<< HEAD
-      
-      // Send email notification when task is completed
-      try {
-        const sendEmail = require('../utils/email');
-        // Force email to patidarnikhil314@gmail.com for testing
-        const userEmail = "patidarnikhil314@gmail.com";
-        console.log(`🎯 Sending completion email to ${userEmail} (original user: ${req.user.email}) for task ${task._id}`);
-        
-        const emailSubject = "✅ Task Completed Successfully";
-        const emailText = `Congratulations! Your task "${task.title}" has been marked as completed.\n\nTask Details:\nTitle: ${task.title}\nDescription: ${task.description || 'No description'}\nCompleted on: ${new Date().toLocaleString()}\n\nThank you for using our Task Manager!`;
-        
-        const emailSent = await sendEmail(userEmail, emailSubject, emailText);
-        if (emailSent) {
-          console.log(`✅ Completion email sent successfully to ${userEmail} for task ${task._id}`);
-        } else {
-          console.log(`❌ Failed to send completion email to ${userEmail} for task ${task._id}`);
-        }
-      } catch (emailError) {
-        console.error("❌ Failed to send completion email:", emailError);
-        // Continue with task update even if email fails
-      }
-=======
       console.log("[updateTask] Setting completedAt:", updates.completedAt);
->>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
     } else if (updates.status && updates.status !== "completed") {
       updates.completedAt = null;
       console.log("[updateTask] Clearing completedAt");
     }
 
-    await task.update(updates);
-    console.log("[updateTask] Task updated:", task.toJSON());
-    res.status(200).json({ status: true, msg: "Task updated", task });
+    const updatedTask = await Task.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true,
+    }).populate("userId", "name email");
+
+    console.log("[updateTask] Task updated:", updatedTask);
+    res
+      .status(200)
+      .json({ status: true, msg: "Task updated", task: updatedTask });
   } catch (error) {
     console.error("[updateTask] Error:", error);
     res.status(500).json({ message: error.message });
@@ -184,13 +250,13 @@ exports.updateTask = async (req, res) => {
 // ✅ DELETE TASK
 exports.deleteTask = async (req, res) => {
   try {
-    // Use Sequelize: find by id and userId
-    const task = await Task.findOne({
-      where: { id: req.params.id, userId: req.user.id },
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user._id || req.user.id,
     });
+
     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    await task.destroy();
     res.json({ message: "Task deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -203,24 +269,18 @@ exports.sendReminders = async (req, res) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const tasks = await Task.findAll({
-      where: {
-        dueDate: { [Op.lte]: tomorrow },
-        status: { [Op.ne]: "completed" },
-        reminderSent: false,
-      },
-      include: {
-        model: User,
-        attributes: ["email"],
-      },
-    });
+    const tasks = await Task.find({
+      dueDate: { $lte: tomorrow },
+      status: { $ne: "completed" },
+      reminderSent: false,
+    }).populate("userId", "email");
 
     let sentCount = 0;
     for (const task of tasks) {
-      if (!task.User?.email) continue;
+      if (!task.userId?.email) continue;
       const message = `Reminder: Your task "${task.title}" is due soon.\n\nDescription: ${task.description}\nDue Date: ${task.dueDate}`;
-      await sendEmail(task.User.email, "Task Reminder", message);
-      await task.update({ reminderSent: true });
+      await sendEmail(task.userId.email, "Task Reminder", message);
+      await Task.findByIdAndUpdate(task._id, { reminderSent: true });
       sentCount++;
     }
 
@@ -235,14 +295,14 @@ exports.sendReminders = async (req, res) => {
 // ✅ TASK STATS
 exports.getTaskStats = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     const [total, completed, inProgress, pending, recurring] =
       await Promise.all([
-        Task.count({ where: { userId } }),
-        Task.count({ where: { userId, status: "completed" } }),
-        Task.count({ where: { userId, status: "in-progress" } }),
-        Task.count({ where: { userId, status: "pending" } }),
-        Task.count({ where: { userId, isRecurring: true } }),
+        Task.countDocuments({ userId }),
+        Task.countDocuments({ userId, status: "completed" }),
+        Task.countDocuments({ userId, status: "in-progress" }),
+        Task.countDocuments({ userId, status: "pending" }),
+        Task.countDocuments({ userId, isRecurring: true }),
       ]);
     res.json({ total, completed, inProgress, pending, recurring });
   } catch (error) {
@@ -253,13 +313,11 @@ exports.getTaskStats = async (req, res) => {
 // ✅ COMPLETION GRAPH (last 7 days)
 exports.getTaskCompletionGraph = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const tasks = await Task.findAll({
-      where: {
-        userId,
-        status: "completed",
-        completedAt: { [Op.ne]: null },
-      },
+    const userId = req.user._id || req.user.id;
+    const tasks = await Task.find({
+      userId,
+      status: "completed",
+      completedAt: { $ne: null },
     });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -294,13 +352,12 @@ exports.getTaskCompletionGraph = async (req, res) => {
 // ✅ CALENDAR EVENTS (user tasks with due dates)
 exports.getCalenderEvents = async (req, res) => {
   try {
-    const tasks = await Task.findAll({
-      where: { userId: req.user.id },
-      attributes: ["id", "title", "description", "dueDate", "status"],
-      order: [["dueDate", "ASC"]],
-    });
+    const tasks = await Task.find({ userId: req.user._id || req.user.id })
+      .select("_id title description dueDate status")
+      .sort({ dueDate: 1 });
+
     const events = tasks.map((task) => ({
-      id: task.id,
+      id: task._id,
       title: task.title,
       description: task.description,
       start: task.dueDate,
@@ -319,9 +376,9 @@ exports.bulkCreateTasks = async (req, res) => {
     if (!Array.isArray(tasks) || tasks.length === 0) {
       return res.status(400).json({ message: "No tasks provided" });
     }
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     const formattedTasks = tasks.map((task) => ({ ...task, userId }));
-    const created = await Task.bulkCreate(formattedTasks);
+    const created = await Task.insertMany(formattedTasks);
     res
       .status(201)
       .json({ message: "Tasks created successfully", tasks: created });

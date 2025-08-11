@@ -19,6 +19,12 @@ const Tasks = ({ onTaskChange }) => {
     priority: "all",
     category: "all",
     search: "",
+    dateFilter: "all",
+    startDate: "",
+    endDate: "",
+    day: "",
+    month: "",
+    year: "",
   });
   const [sortBy, setSortBy] = useState({ field: "dueDate", order: "asc" });
   const [newTask, setNewTask] = useState({
@@ -34,8 +40,13 @@ const Tasks = ({ onTaskChange }) => {
   });
 
   const fetchTasksData = useCallback(() => {
-    dispatch(fetchTasks());
-  }, [dispatch]);
+    const queryParams = {
+      ...filters,
+      sortBy: sortBy.field,
+      order: sortBy.order,
+    };
+    dispatch(fetchTasks(queryParams));
+  }, [dispatch, filters, sortBy]);
 
   // Expose fetchTasksData to TaskCard via prop
   const handleTaskListChange = () => {
@@ -85,50 +96,10 @@ const Tasks = ({ onTaskChange }) => {
     }));
   };
 
+  // Since we're doing server-side filtering and sorting, just return tasks directly
   const filteredAndSortedTasks = useMemo(() => {
-    let result = [...tasks];
-
-    // Apply filters
-    if (filters.status !== "all") {
-      result = result.filter((task) => task.status === filters.status);
-    }
-    if (filters.priority !== "all") {
-      result = result.filter((task) => task.priority === filters.priority);
-    }
-    if (filters.category !== "all") {
-      result = result.filter((task) => task.category === filters.category);
-    }
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (task) =>
-          task.title.toLowerCase().includes(searchLower) ||
-          task.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy.field) {
-        case "dueDate":
-          comparison = new Date(a.dueDate) - new Date(b.dueDate);
-          break;
-        case "priority":
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
-          break;
-        case "title":
-          comparison = a.title.localeCompare(b.title);
-          break;
-        default:
-          comparison = 0;
-      }
-      return sortBy.order === "asc" ? comparison : -comparison;
-    });
-
-    return result;
-  }, [tasks, filters, sortBy]);
+    return tasks || [];
+  }, [tasks]);
 
   if (loading) {
     return (
@@ -176,7 +147,7 @@ const Tasks = ({ onTaskChange }) => {
 
       {showFilters && (
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search
@@ -239,6 +210,133 @@ const Tasks = ({ onTaskChange }) => {
                 <option value="school">School</option>
                 <option value="other">Other</option>
               </select>
+            </div>
+          </div>
+
+          {/* Date Filtering Section */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              Date Filters
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quick Date Filter
+                </label>
+                <select
+                  name="dateFilter"
+                  value={filters.dateFilter}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={filters.startDate}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={filters.endDate}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Specific Year
+                </label>
+                <input
+                  type="number"
+                  name="year"
+                  value={filters.year}
+                  onChange={handleFilterChange}
+                  placeholder="e.g., 2024"
+                  min="2020"
+                  max="2030"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Specific Month
+                </label>
+                <select
+                  name="month"
+                  value={filters.month}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">All Months</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Specific Day
+                </label>
+                <input
+                  type="number"
+                  name="day"
+                  value={filters.day}
+                  onChange={handleFilterChange}
+                  placeholder="Day (1-31)"
+                  min="1"
+                  max="31"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() =>
+                    setFilters({
+                      status: "all",
+                      priority: "all",
+                      category: "all",
+                      search: "",
+                      dateFilter: "all",
+                      startDate: "",
+                      endDate: "",
+                      day: "",
+                      month: "",
+                      year: "",
+                    })
+                  }
+                  className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Clear All Filters
+                </button>
+              </div>
             </div>
           </div>
         </div>

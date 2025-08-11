@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 export const postLoginData = (email, password) => async (dispatch) => {
   try {
     dispatch({ type: LOGIN_REQUEST });
-    const { data } = await api.post("/api/auth/login", { email, password });
+    const { data } = await api.post("/auth/login", { email, password });
 
     // Log the login response for debugging
     console.log("[FRONTEND LOGIN] Response:", data);

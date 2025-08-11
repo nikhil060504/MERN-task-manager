@@ -35,7 +35,7 @@ const TaskCard = ({ task, onTaskChange }) => {
   })();
 
   const handleDelete = () => {
-    dispatch(deleteTask(task.id)).then(() => {
+    dispatch(deleteTask(task._id || task.id)).then(() => {
       if (onTaskChange) onTaskChange();
     });
     toast.success("Task deleted successfully!");
@@ -52,7 +52,7 @@ const TaskCard = ({ task, onTaskChange }) => {
       } else {
         newStatus = "completed";
       }
-      await dispatch(updateTask(task.id, { status: newStatus }));
+      await dispatch(updateTask(task._id || task.id, { status: newStatus }));
       if (onTaskChange) onTaskChange();
       toast.success("Task status updated!");
     } catch (err) {
@@ -101,7 +101,7 @@ const TaskCard = ({ task, onTaskChange }) => {
 
   const handleUpdate = async () => {
     try {
-      await dispatch(updateTask(task.id, editTask));
+      await dispatch(updateTask(task._id || task.id, editTask));
       setIsEditing(false);
       if (onTaskChange) onTaskChange();
       toast.success("Task updated successfully");

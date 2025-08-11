@@ -1,32 +1,45 @@
 import api from "../../api";
 import { toast } from "react-hot-toast";
 
-export const fetchTasks = () => async (dispatch) => {
-  try {
-    dispatch({ type: "FETCH_TASKS_START" });
-    const { data } = await api.get("/tasks");
+export const fetchTasks =
+  (filters = {}) =>
+  async (dispatch) => {
+    try {
+      dispatch({ type: "FETCH_TASKS_START" });
 
-    if (!data.tasks) {
-      throw new Error(data.msg || "Failed to fetch tasks");
+      // Build query parameters from filters
+      const queryParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== "all" && value !== "") {
+          queryParams.append(key, value);
+        }
+      });
+
+      const queryString = queryParams.toString();
+      const url = queryString ? `/tasks?${queryString}` : "/tasks";
+      const { data } = await api.get(url);
+
+      if (!data.tasks) {
+        throw new Error(data.msg || "Failed to fetch tasks");
+      }
+
+      dispatch({
+        type: "FETCH_TASKS_SUCCESS",
+        payload: data.tasks,
+      });
+      return data.tasks;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.msg || error.message || "Failed to fetch tasks";
+      dispatch({
+        type: "FETCH_TASKS_ERROR",
+        payload: errorMessage,
+      });
+      console.error("Error fetching tasks:", error);
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
-
-    dispatch({
-      type: "FETCH_TASKS_SUCCESS",
-      payload: data.tasks,
-    });
-    return data.tasks;
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.msg || error.message || "Failed to fetch tasks";
-    dispatch({
-      type: "FETCH_TASKS_ERROR",
-      payload: errorMessage,
-    });
-    console.error("Error fetching tasks:", error);
-    toast.error(errorMessage);
-    throw new Error(errorMessage);
-  }
-};
+  };
 
 export const deleteTask = (id) => async (dispatch) => {
   try {
