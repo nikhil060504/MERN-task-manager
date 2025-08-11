@@ -1,22 +1,24 @@
 require("dotenv").config({ path: require('path').resolve(__dirname, './utils/.env') });
 const express = require("express");
 const app = express();
-const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const limiter = require("./middleware/rateLimiter");
 
 app.use(express.json());
 app.use(cors());
+app.use(limiter);
 
-const mongoUrl = process.env.MONGODB_URL;
-mongoose.connect(mongoUrl, (err) => {
-  if (err) throw err;
-  console.log("Mongodb connected...");
-});
+const sequelize = require("./config/db");
+
+sequelize
+  .sync({ alter: true }) // creates or alters tables
+  .then(() => console.log("✅ MySQL Database Synced"))
+  .catch((err) => console.error("❌ Sync Error:", err));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -29,14 +31,17 @@ if (process.env.NODE_ENV === "production") {
   );
 }
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`Backend is running on port ${port}`);
 });
 
 const cron = require("node-cron");
+<<<<<<< HEAD
 const Task = require("./models/Task");
 const sendEmail = require("./utils/email");
+=======
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
 const checkReminders = require("./utils/remainderSchedular");
 
 // Run every minute
@@ -48,6 +53,7 @@ cron.schedule("* * * * *", async () => {
     console.error("❌ Error in minute-wise reminder check:", error);
   }
 });
+<<<<<<< HEAD
 
 // Run daily at 9AM
 cron.schedule("0 9 * * *", async () => {
@@ -96,3 +102,5 @@ cron.schedule("0 9 * * *", async () => {
     console.error("❌ Error in daily reminder job:", error);
   }
 });
+=======
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f

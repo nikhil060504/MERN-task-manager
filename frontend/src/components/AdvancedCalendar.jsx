@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import axios from "axios";
-import { motion } from "framer-motion";
 import api from "../api/index";
+import { motion } from "framer-motion";
+
 const locales = { "en-US": require("date-fns/locale/en-US") };
 const localizer = dateFnsLocalizer({
   format,
@@ -42,10 +42,10 @@ const AdvancedCalendar = () => {
         const token = localStorage.getItem("token");
         // Fetch tasks and holidays/festivals
         const [tasksRes, holidaysRes] = await Promise.all([
-          axios.get("/api/tasks", {
+          api.get("/tasks", {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("/api/tasks/events", {
+          api.get("/tasks/events", {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -71,7 +71,7 @@ const AdvancedCalendar = () => {
         // Fallback to just tasks if holidays fail
         try {
           const token = localStorage.getItem("token");
-          const tasksRes = await api.get("/api/tasks", {
+          const tasksRes = await api.get("/tasks", {
             headers: { Authorization: `Bearer ${token}` },
           });
           const taskEvents = (tasksRes.data.tasks || []).map((task) => ({

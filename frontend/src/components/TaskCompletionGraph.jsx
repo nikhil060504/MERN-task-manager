@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   Label,
   Cell,
 } from "recharts";
@@ -29,11 +28,10 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const TaskCompletionGraph = ({ data = []}) => {
+const TaskCompletionGraph = ({ data = [] }) => {
   // Colors for bars
   const normalColor = "#3B82F6"; // blue-500
   const todayColor = "#2563EB"; // blue-600
-  const hoverColor = "#1D4ED8"; // blue-700
 
   return (
     <div className="w-full h-full min-h-[300px] flex flex-col">
@@ -72,36 +70,32 @@ const TaskCompletionGraph = ({ data = []}) => {
                 className="fill-current"
               />
             </YAxis>
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "rgba(0, 0, 0, 0.1)" }}
-            />
-            <Legend
-              verticalAlign="top"
-              height={36}
-              wrapperStyle={{ paddingBottom: "20px" }}
-            />
-            <Bar
-              dataKey="completed"
-              name="Completed Tasks"
-              radius={[6, 6, 0, 0]}
-            >
-              {data.map((entry, index) => (
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="completed">
+              {data.map((entry, idx) => (
                 <Cell
-                  key={`cell-${index}`}
+                  key={`cell-${idx}`}
                   fill={entry.isToday ? todayColor : normalColor}
-                  className="hover:fill-blue-700 transition-colors"
                 />
+              ))}
+              {/* Show numbers above bars */}
+              {data.map((entry, idx) => (
+                <text
+                  key={`label-${idx}`}
+                  x={idx * 60 + 30}
+                  y={250 - entry.completed * 10}
+                  textAnchor="middle"
+                  fill="#111827"
+                  fontSize={14}
+                  fontWeight={entry.isToday ? 700 : 400}
+                >
+                  {entry.completed}
+                </text>
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-      {(!data || data.length === 0) && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
-          No task completion data available
-        </div>
-      )}
     </div>
   );
 };

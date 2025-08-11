@@ -35,7 +35,7 @@ const TaskCard = ({ task, onTaskChange }) => {
   })();
 
   const handleDelete = () => {
-    dispatch(deleteTask(task._id)).then(() => {
+    dispatch(deleteTask(task.id)).then(() => {
       if (onTaskChange) onTaskChange();
     });
     toast.success("Task deleted successfully!");
@@ -43,43 +43,20 @@ const TaskCard = ({ task, onTaskChange }) => {
 
   const handleStatusChange = async (e) => {
     try {
-      // Stop event propagation to prevent card click
       e.stopPropagation();
-
-      // Toggle status correctly based on current status
       let newStatus;
       if (task.status === "completed") {
         newStatus = "pending";
       } else if (task.status === "pending") {
         newStatus = "completed";
       } else {
-        newStatus = "completed"; // Default to completed if in any other state
+        newStatus = "completed";
       }
-
-      // Log the status change
-      console.log("[TaskCard] Status change:", {
-        oldStatus: task.status,
-        newStatus,
-        taskId: task._id,
-      });
-
-      const updatedData = {
-        ...task,
-        status: newStatus,
-        completedAt:
-          newStatus === "completed" ? new Date().toISOString() : null,
-      };
-
-      await dispatch(updateTask(task._id, updatedData));
-
-      // Immediately show feedback
-      toast.success(`Task marked as ${newStatus}`);
-
-      // Refresh task list to update counts
+      await dispatch(updateTask(task.id, { status: newStatus }));
       if (onTaskChange) onTaskChange();
-    } catch (error) {
-      console.error("Failed to update task status:", error);
-      toast.error("Failed to update task status");
+      toast.success("Task status updated!");
+    } catch (err) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -124,7 +101,7 @@ const TaskCard = ({ task, onTaskChange }) => {
 
   const handleUpdate = async () => {
     try {
-      await dispatch(updateTask(task._id, editTask));
+      await dispatch(updateTask(task.id, editTask));
       setIsEditing(false);
       if (onTaskChange) onTaskChange();
       toast.success("Task updated successfully");

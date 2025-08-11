@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import api from "../api/index";
 import AdvancedCalendar from "../components/AdvancedCalendar";
 import Tasks from "../components/Tasks";
 import MainLayout from "../layouts/MainLayout";
 import StatsCards from "../components/StatsCards";
 import TaskCompletionGraph from "../components/TaskCompletionGraph";
 import { FaCalendarAlt, FaChartBar } from "react-icons/fa";
-import api from "../api/index";
+
 const Home = () => {
   const authState = useSelector((state) => state.auth) || {
     isLoggedIn: false,
@@ -34,6 +34,21 @@ const Home = () => {
     };
     if (isLoggedIn && token) fetchGraphData();
   }, [isLoggedIn, token, user]);
+
+  // Add this effect to refresh the graph when statsRefreshKey changes
+  useEffect(() => {
+    const fetchGraphData = async () => {
+      try {
+        const res = await api.get("/tasks/completion-graph", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setGraphData(res.data);
+      } catch (err) {
+        console.error("Failed to load graph data:", err);
+      }
+    };
+    if (isLoggedIn && token) fetchGraphData();
+  }, [statsRefreshKey, isLoggedIn, token]);
 
   return (
     <MainLayout>

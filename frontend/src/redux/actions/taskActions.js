@@ -1,4 +1,4 @@
-import api from "../../api/index";
+import api from "../../api";
 import { toast } from "react-hot-toast";
 
 export const fetchTasks = () => async (dispatch) => {

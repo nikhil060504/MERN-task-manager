@@ -37,6 +37,12 @@ const Tasks = ({ onTaskChange }) => {
     dispatch(fetchTasks());
   }, [dispatch]);
 
+  // Expose fetchTasksData to TaskCard via prop
+  const handleTaskListChange = () => {
+    fetchTasksData();
+    if (onTaskChange) onTaskChange();
+  };
+
   useEffect(() => {
     fetchTasksData();
   }, [fetchTasksData]);
@@ -367,7 +373,11 @@ const Tasks = ({ onTaskChange }) => {
 
       <div className="bg-gray-50 rounded-xl p-6 shadow-inner grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAndSortedTasks.map((task) => (
-          <TaskCard key={task._id} task={task} onTaskChange={onTaskChange} />
+          <TaskCard
+            key={task.id || task._id}
+            task={task}
+            onTaskChange={handleTaskListChange}
+          />
         ))}
         {filteredAndSortedTasks.length === 0 && (
           <div className="col-span-full text-center text-gray-500 py-8">

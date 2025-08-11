@@ -1,105 +1,9 @@
-// const Task = require("../models/Task");
-// const { validateObjectId } = require("../utils/validation");
-
-// exports.getTasks = async (req, res) => {
-//   try {
-//     const tasks = await Task.find({ user: req.user.id });
-//     res.status(200).json({ tasks, status: true, msg: "Tasks found successfully.." });
-//   }
-//   catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// }
-
-// exports.getTask = async (req, res) => {
-//   try {
-//     if (!validateObjectId(req.params.taskId)) {
-//       return res.status(400).json({ status: false, msg: "Task id not valid" });
-//     }
-
-//     const task = await Task.findOne({ user: req.user.id, _id: req.params.taskId });
-//     if (!task) {
-//       return res.status(400).json({ status: false, msg: "No task found.." });
-//     }
-//     res.status(200).json({ task, status: true, msg: "Task found successfully.." });
-//   }
-//   catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// }
-
-// exports.postTask = async (req, res) => {
-//   try {
-//     const { description } = req.body;
-//     if (!description) {
-//       return res.status(400).json({ status: false, msg: "Description of task not found" });
-//     }
-//     const task = await Task.create({ user: req.user.id, description });
-//     res.status(200).json({ task, status: true, msg: "Task created successfully.." });
-//   }
-//   catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// }
-
-// exports.putTask = async (req, res) => {
-//   try {
-//     const { description } = req.body;
-//     if (!description) {
-//       return res.status(400).json({ status: false, msg: "Description of task not found" });
-//     }
-
-//     if (!validateObjectId(req.params.taskId)) {
-//       return res.status(400).json({ status: false, msg: "Task id not valid" });
-//     }
-
-//     let task = await Task.findById(req.params.taskId);
-//     if (!task) {
-//       return res.status(400).json({ status: false, msg: "Task with given id not found" });
-//     }
-
-//     if (task.user != req.user.id) {
-//       return res.status(403).json({ status: false, msg: "You can't update task of another user" });
-//     }
-
-//     task = await Task.findByIdAndUpdate(req.params.taskId, { description }, { new: true });
-//     res.status(200).json({ task, status: true, msg: "Task updated successfully.." });
-//   }
-//   catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// }
-
-// exports.deleteTask = async (req, res) => {
-//   try {
-//     if (!validateObjectId(req.params.taskId)) {
-//       return res.status(400).json({ status: false, msg: "Task id not valid" });
-//     }
-
-//     let task = await Task.findById(req.params.taskId);
-//     if (!task) {
-//       return res.status(400).json({ status: false, msg: "Task with given id not found" });
-//     }
-
-//     if (task.user != req.user.id) {
-//       return res.status(403).json({ status: false, msg: "You can't delete task of another user" });
-//     }
-
-//     await Task.findByIdAndDelete(req.params.taskId);
-//     res.status(200).json({ status: true, msg: "Task deleted successfully.." });
-//   }
-//   catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ status: false, msg: "Internal Server Error" });
-//   }
-// }
-
+const { Op } = require("sequelize");
 const Task = require("../models/Task");
+const User = require("../models/User");
 const sendEmail = require("../utils/email");
+
+// ✅ CREATE TASK
 exports.createTask = async (req, res) => {
   try {
     const {
@@ -114,8 +18,8 @@ exports.createTask = async (req, res) => {
       recurringType,
     } = req.body;
 
-    const task = new Task({
-      user: req.user._id,
+    const task = await Task.create({
+      userId: req.user.id,
       title,
       description,
       status,
@@ -127,75 +31,45 @@ exports.createTask = async (req, res) => {
       recurringType,
     });
 
-    await task.save();
     res.status(201).json({ message: "Task created successfully", task });
   } catch (error) {
-    console.error(error);
     res.status(400).json({ message: error.message });
   }
 };
 
-// exports.getTasks = async (req, res) => {
-//   try {
-//     const { status, priority } = req.query;
-//     const filter = { user: req.user.id };
-
-//     if (status) filter.status = status;
-//     if (priority) filter.priority = priority;
-
-//     const tasks = await Task.find(filter).sort({ createdAt: -1 });
-//     res.json(tasks);
-
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-//const Task = require('../models/Task');
-
+// ✅ GET TASKS (with filtering, pagination, search)
 exports.getTasks = async (req, res) => {
   try {
-    if (!req.user?._id) {
-      return res.status(401).json({
-        status: false,
-        msg: "Authentication required",
-      });
-    }
-
     const {
       status,
       priority,
       category,
-      sortBy,
-      order,
+      sortBy = "createdAt",
+      order = "desc",
       page = 1,
       limit = 10,
+      search,
     } = req.query;
 
-    const filter = { user: req.user._id };
+    const filter = { userId: req.user.id };
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (category) filter.category = category;
-    //console.log("Fetching tasks for user:", req.user._id);
-
-    if (req.query.search) {
-      const searchRegex = new RegExp(req.query.search, "i"); // case-insensitive
-      filter.$or = [{ title: searchRegex }, { description: searchRegex }];
+    if (search) {
+      filter[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
     }
 
-    const sortOptions = {};
-    if (sortBy) {
-      sortOptions[sortBy] = order === "asc" ? 1 : -1;
-    } else {
-      sortOptions.createdAt = -1; // default: latest first
-    }
+    const offset = (page - 1) * limit;
 
-    const tasks = await Task.find(filter)
-      .sort(sortOptions)
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-
-    const total = await Task.countDocuments(filter);
+    const { rows: tasks, count: total } = await Task.findAndCountAll({
+      where: filter,
+      order: [[sortBy, order.toUpperCase()]],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+    });
 
     res.status(200).json({
       tasks,
@@ -208,90 +82,44 @@ exports.getTasks = async (req, res) => {
   }
 };
 
-// GET /tasks?status=completed&sortBy=dueDate&order=asc
-
+// ✅ GET TASK BY ID
 exports.getTaskById = async (req, res) => {
   try {
-    if (!req.user?._id) {
-      return res.status(401).json({
-        status: false,
-        msg: "Authentication required",
-      });
-    }
-
     const task = await Task.findOne({
-      _id: req.params.id,
-      user: req.user._id,
+      where: {
+        id: req.params.id,
+        userId: req.user.id,
+      },
     });
 
-    if (!task) {
-      return res.status(404).json({
-        status: false,
-        msg: "Task not found",
-      });
-    }
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
-    res.status(200).json({
-      task,
-      status: true,
-      msg: "Task found successfully",
-    });
-  } catch (err) {
-    console.error("Error in getTaskById:", err);
-    return res.status(500).json({
-      status: false,
-      msg: "Internal Server Error",
-      error: err.message,
-    });
+    res
+      .status(200)
+      .json({ task, status: true, msg: "Task found successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
+// ✅ UPDATE TASK
 exports.updateTask = async (req, res) => {
   try {
-    // Log the incoming request
-    console.log("[updateTask] Request:", {
-      user: req.user?._id,
-      taskId: req.params.id,
-      body: req.body,
-    });
-
-    // Validate user
-    if (!req.user?._id) {
-      console.log("[updateTask] No authenticated user");
-      return res.status(401).json({
-        status: false,
-        msg: "Authentication required",
-      });
-    }
-
-    const taskId = req.params.id;
-    if (!taskId) {
-      console.log("[updateTask] No task ID provided");
-      return res.status(400).json({
-        status: false,
-        msg: "Task ID is required",
-      });
-    }
-
-    // Find the task and verify ownership
     const task = await Task.findOne({
-      _id: taskId,
-      user: req.user._id,
+      where: { id: req.params.id, userId: req.user.id },
     });
 
     if (!task) {
-      console.log("[updateTask] Task not found or access denied:", {
-        taskId,
-        userId: req.user._id,
+      console.log("[updateTask] Task not found or access denied", {
+        id: req.params.id,
+        userId: req.user.id,
       });
-      return res.status(404).json({
-        status: false,
-        msg: "Task not found or access denied",
-      });
+      return res
+        .status(404)
+        .json({ message: "Task not found or access denied" });
     }
 
-    // Update allowed fields
-    const allowedUpdates = [
+    const allowedFields = [
       "title",
       "description",
       "status",
@@ -304,30 +132,17 @@ exports.updateTask = async (req, res) => {
       "completedAt",
     ];
 
-    // Filter and validate updates
-    const updates = Object.keys(req.body)
-      .filter((key) => allowedUpdates.includes(key))
-      .reduce((obj, key) => {
-        if (req.body[key] !== undefined) {
-          obj[key] = req.body[key];
-        }
-        return obj;
-      }, {});
-
-    // Validate status if it's being updated
-    if (
-      updates.status &&
-      !["pending", "in-progress", "completed"].includes(updates.status)
-    ) {
-      return res.status(400).json({
-        status: false,
-        msg: "Invalid status value",
-      });
+    const updates = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) {
+        updates[key] = req.body[key];
+      }
     }
 
-    // Handle status change completion date
+    // Debug: log status and completedAt logic
     if (updates.status === "completed" && task.status !== "completed") {
       updates.completedAt = new Date();
+<<<<<<< HEAD
       
       // Send email notification when task is completed
       try {
@@ -349,246 +164,168 @@ exports.updateTask = async (req, res) => {
         console.error("❌ Failed to send completion email:", emailError);
         // Continue with task update even if email fails
       }
+=======
+      console.log("[updateTask] Setting completedAt:", updates.completedAt);
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
     } else if (updates.status && updates.status !== "completed") {
       updates.completedAt = null;
+      console.log("[updateTask] Clearing completedAt");
     }
 
-    // Apply updates
-    Object.assign(task, updates);
-    await task.save();
-
-    console.log("[updateTask] Task updated successfully:", task);
-
-    res.status(200).json({
-      status: true,
-      msg: "Task updated successfully",
-      task,
-    });
-  } catch (err) {
-    console.error("[updateTask] Error:", err);
-    return res.status(500).json({
-      status: false,
-      msg: "Failed to update task",
-      error: err.message,
-    });
+    await task.update(updates);
+    console.log("[updateTask] Task updated:", task.toJSON());
+    res.status(200).json({ status: true, msg: "Task updated", task });
+  } catch (error) {
+    console.error("[updateTask] Error:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
+// ✅ DELETE TASK
 exports.deleteTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    // Use Sequelize: find by id and userId
+    const task = await Task.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!task) return res.status(404).json({ message: "Task not found" });
 
-    if (task.user.toString() !== req.user._id)
-      return res.status(401).json({ message: "Unauthorized" });
-
-    await task.remove();
+    await task.destroy();
     res.json({ message: "Task deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// ✅ SEND REMINDERS
 exports.sendReminders = async (req, res) => {
   try {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const tasks = await Task.find({
-      dueDate: { $lte: tomorrow },
-      status: { $ne: "completed" },
-      reminderSent: false,
-    }).populate("user", "email");
+    const tasks = await Task.findAll({
+      where: {
+        dueDate: { [Op.lte]: tomorrow },
+        status: { [Op.ne]: "completed" },
+        reminderSent: false,
+      },
+      include: {
+        model: User,
+        attributes: ["email"],
+      },
+    });
 
     let sentCount = 0;
-
     for (const task of tasks) {
-      if (!task.user?.email) continue;
-
+      if (!task.User?.email) continue;
       const message = `Reminder: Your task "${task.title}" is due soon.\n\nDescription: ${task.description}\nDue Date: ${task.dueDate}`;
-
-      await sendEmail(task.user.email, "Task Reminder", message);
-      task.reminderSent = true; // ✅ Mark as sent
-      await task.save(); // ✅ Save to DB
-
+      await sendEmail(task.User.email, "Task Reminder", message);
+      await task.update({ reminderSent: true });
       sentCount++;
     }
 
     res.status(200).json({ message: `${sentCount} reminder(s) sent.` });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to send reminders", error: err.message });
+      .json({ message: "Reminder sending failed", error: error.message });
   }
 };
 
+// ✅ TASK STATS
 exports.getTaskStats = async (req, res) => {
   try {
-    console.log("🔥 getStats called");
-    console.log("🧑 req.user =", req.user);
-
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ msg: "Unauthorized - No user" });
-    }
-
-    // Get all counts in parallel for better performance
+    const userId = req.user.id;
     const [total, completed, inProgress, pending, recurring] =
       await Promise.all([
-        Task.countDocuments({ user: req.user._id }),
-        Task.countDocuments({
-          user: req.user._id,
-          status: "completed",
-        }),
-        Task.countDocuments({
-          user: req.user._id,
-          status: "in-progress",
-        }),
-        Task.countDocuments({
-          user: req.user._id,
-          status: "pending",
-        }),
-        Task.countDocuments({
-          user: req.user._id,
-          isRecurring: true,
-        }),
+        Task.count({ where: { userId } }),
+        Task.count({ where: { userId, status: "completed" } }),
+        Task.count({ where: { userId, status: "in-progress" } }),
+        Task.count({ where: { userId, status: "pending" } }),
+        Task.count({ where: { userId, isRecurring: true } }),
       ]);
-
-    console.log("Stats calculated:", {
-      total,
-      completed,
-      inProgress,
-      pending,
-      recurring,
-    });
-
-    return res.json({
-      total,
-      completed,
-      inProgress,
-      pending,
-      recurring,
-      msg: "Stats retrieved successfully",
-    });
+    res.json({ total, completed, inProgress, pending, recurring });
   } catch (error) {
-    console.error("❌ Error in getStats:", error);
-    return res.status(500).json({ msg: "Server error", error: error.message });
+    res.status(500).json({ message: "Stats error", error: error.message });
   }
 };
 
+// ✅ COMPLETION GRAPH (last 7 days)
 exports.getTaskCompletionGraph = async (req, res) => {
   try {
-    // Log the request for debugging
-    console.log(
-      "[getTaskCompletionGraph] Fetching data for user:",
-      req.user._id
-    );
-
-    // Get all tasks for the user
-    const tasks = await Task.find({ user: req.user._id });
-
-    // Get the last 7 days including today
+    const userId = req.user.id;
+    const tasks = await Task.findAll({
+      where: {
+        userId,
+        status: "completed",
+        completedAt: { [Op.ne]: null },
+      },
+    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setHours(0, 0, 0, 0); // Set to start of day
-      date.setDate(date.getDate() - i);
-      return date;
-    }).reverse();
-
-    // Count completed tasks for each day
-    const completionData = last7Days.map((date) => {
+      const day = new Date(today);
+      day.setDate(day.getDate() - (6 - i));
+      return day;
+    });
+    const graphData = last7Days.map((date) => {
       const dayStart = new Date(date);
       const dayEnd = new Date(date);
-      dayEnd.setDate(dayEnd.getDate() + 1);
-
-      const completedTasks = tasks.filter((task) => {
-        // Task must be completed and have a completedAt date
-        if (task.status !== "completed" || !task.completedAt) {
-          return false;
-        }
-
-        // Check if the task was completed on this day
-        const completedAt = new Date(task.completedAt);
-        return completedAt >= dayStart && completedAt < dayEnd;
+      dayEnd.setDate(dayStart.getDate() + 1);
+      const completedCount = tasks.filter((task) => {
+        const completed = new Date(task.completedAt);
+        return completed >= dayStart && completed < dayEnd;
       }).length;
-
-      // Format date for display (e.g., "Jun 16")
-      const formattedDate = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-
-      const isToday = new Date().toDateString() === date.toDateString();
-
       return {
-        date: formattedDate,
-        completed: completedTasks,
-        isToday,
+        date: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        completed: completedCount,
+        isToday: today.toDateString() === date.toDateString(),
       };
     });
-
-    // Log the results for debugging
-    console.log("[getTaskCompletionGraph] Completion data:", completionData);
-
-    res.status(200).json(completionData);
+    res.status(200).json(graphData);
   } catch (error) {
-    console.error("[getTaskCompletionGraph] Error:", error);
-    res.status(500).json({ message: "Error fetching completion graph data" });
+    res.status(500).json({ message: "Graph error", error: error.message });
   }
 };
 
-// controllers/calendarController.js
-
-exports.holidays = require("../data/holidays");
-
-// Get all holidays and festivals
-exports.getCalendarEvents = async (req, res) => {
-  try {
-    return res.status(200).json({ success: true, events: holidays });
-  } catch (error) {
-    console.error("❌ Error in getCalendarEvents:", error);
-    return res.status(500).json({ success: false, msg: "Server error" });
-  }
-};
-
+// ✅ CALENDAR EVENTS (user tasks with due dates)
 exports.getCalenderEvents = async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user._id })
-      .select("title description dueDate status")
-      .sort({ dueDate: 1 });
-
+    const tasks = await Task.findAll({
+      where: { userId: req.user.id },
+      attributes: ["id", "title", "description", "dueDate", "status"],
+      order: [["dueDate", "ASC"]],
+    });
     const events = tasks.map((task) => ({
-      id: task._id,
+      id: task.id,
       title: task.title,
       description: task.description,
       start: task.dueDate,
       status: task.status,
     }));
-
     res.status(200).json(events);
   } catch (error) {
-    console.error("Error fetching calendar events:", error);
-    res.status(500).json({ message: "Error fetching calendar events" });
+    res.status(500).json({ message: "Calendar error", error: error.message });
   }
 };
 
+// ✅ BULK CREATE TASKS
 exports.bulkCreateTasks = async (req, res) => {
   try {
-    const { tasks } = req.body; // tasks: array of {title, dueDate, dueTime, ...}
+    const { tasks } = req.body;
     if (!Array.isArray(tasks) || tasks.length === 0) {
       return res.status(400).json({ message: "No tasks provided" });
     }
-    const userId = req.user._id;
-    const createdTasks = await Promise.all(
-      tasks.map((taskData) => {
-        return new Task({ ...taskData, user: userId }).save();
-      })
-    );
+    const userId = req.user.id;
+    const formattedTasks = tasks.map((task) => ({ ...task, userId }));
+    const created = await Task.bulkCreate(formattedTasks);
     res
       .status(201)
-      .json({ message: "Tasks created successfully", tasks: createdTasks });
+      .json({ message: "Tasks created successfully", tasks: created });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };

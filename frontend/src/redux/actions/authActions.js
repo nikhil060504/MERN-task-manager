@@ -1,17 +1,16 @@
-import api from "../../api";
+import api from "../../api/index";
 import {
   LOGIN_FAILURE,
   LOGIN_REQUEST,
   LOGIN_SUCCESS,
   LOGOUT,
-  SAVE_PROFILE,
 } from "./actionTypes";
 import { toast } from "react-toastify";
 
 export const postLoginData = (email, password) => async (dispatch) => {
   try {
     dispatch({ type: LOGIN_REQUEST });
-    const { data } = await api.post("/auth/login", { email, password });
+    const { data } = await api.post("/api/auth/login", { email, password });
 
     // Log the login response for debugging
     console.log("[FRONTEND LOGIN] Response:", data);
@@ -70,14 +69,8 @@ export const saveProfile = (token) => async (dispatch) => {
       },
     });
   } catch (error) {
-    console.error("Profile fetch failed:", error.message);
-    // Clear invalid token
-    localStorage.removeItem("token");
-    dispatch({
-      type: "LOGOUT",
-      payload: { msg: "Session expired. Please login again." },
-    });
-    throw error;
+    console.error("Profile fetch error:", error);
+    toast.error(error.message || "Failed to load profile");
   }
 };
 

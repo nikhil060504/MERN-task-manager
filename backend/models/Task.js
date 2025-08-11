@@ -1,63 +1,82 @@
-const mongoose = require("mongoose");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
+const User = require("./User");
 
-const taskSchema = new mongoose.Schema(
+const Task = sequelize.define(
+  "Task",
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: User,
+        key: "id",
+      },
     },
     title: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    description: String,
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
-      type: String,
-      enum: ["pending", "in-progress", "completed"],
-      default: "pending",
+      type: DataTypes.ENUM("pending", "in-progress", "completed"),
+      defaultValue: "pending",
     },
     priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
+      type: DataTypes.ENUM("low", "medium", "high"),
+      defaultValue: "medium",
     },
     category: {
-      type: String,
-      enum: ["work", "personal", "health", "school", "other"],
-      default: "other",
+      type: DataTypes.ENUM("work", "personal", "health", "school", "other"),
+      defaultValue: "other",
     },
-    dueDate: Date,
+    dueDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     dueTime: {
-      type: String, // Store as 'HH:mm' (24-hour format)
-      default: null,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     reminderDate: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     completedAt: {
-      type: Date,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     reminderSent: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     lastReminderSentAt: {
-      type: Date,
-      default: null,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     isRecurring: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     recurringType: {
-      type: String,
-      enum: ["none", "daily", "weekly", "monthly", "yearly"],
-      default: "none",
+      type: DataTypes.ENUM("none", "daily", "weekly", "monthly", "yearly"),
+      defaultValue: "none",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("Task", taskSchema);
+Task.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(Task, { foreignKey: "userId" });
+
+module.exports = Task;

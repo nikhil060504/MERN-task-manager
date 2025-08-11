@@ -1,9 +1,11 @@
-const Task = require("../models/Task");
+const Task = require("../models/Task"); // Sequelize model
 const sendEmail = require("./email");
+const { Op } = require("sequelize");
 const User = require("../models/User");
 
 const checkReminders = async () => {
   const now = new Date();
+<<<<<<< HEAD
   console.log(`🔍 Checking reminders at ${now.toLocaleString()}`);
   
   try {
@@ -38,11 +40,29 @@ const checkReminders = async () => {
     }
     
     // Combine dueDate and dueTime for comparison
+=======
+  const tasks = await Task.findAll({
+    where: {
+      status: { [Op.ne]: "completed" },
+      reminderSent: false,
+      dueDate: { [Op.ne]: null },
+    },
+    include: [
+      {
+        model: User,
+        attributes: ["email"],
+      },
+    ],
+  });
+  for (const task of tasks) {
+    if (!task.User?.email) continue;
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
     let dueDateTime = new Date(task.dueDate);
     if (task.dueTime) {
       const [hours, minutes] = task.dueTime.split(":");
       dueDateTime.setHours(Number(hours), Number(minutes), 0, 0);
     }
+<<<<<<< HEAD
     
     console.log(`📅 Task "${task.title}" (ID: ${task._id}):\n  - Due: ${dueDateTime.toLocaleString()}\n  - Current time: ${now.toLocaleString()}\n  - Is due: ${now >= dueDateTime ? 'YES' : 'NO'}`);
     
@@ -52,11 +72,17 @@ const checkReminders = async () => {
       
       const emailSent = await sendEmail(
         task.user.email,
+=======
+    if (now >= dueDateTime) {
+      await sendEmail(
+        task.User.email,
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
         `⏰ Reminder: Task "${task.title}" is due`,
         `Your task "${task.title}" is still pending.\n\nDescription: ${
           task.description || 'No description'
         }\nDue Date: ${dueDateTime.toLocaleString()}`
       );
+<<<<<<< HEAD
       
       if (emailSent) {
         console.log(`✅ Reminder email sent successfully for task "${task.title}"`);
@@ -67,6 +93,9 @@ const checkReminders = async () => {
       } else {
         console.log(`❌ Failed to send reminder email for task "${task.title}"`);
       }
+=======
+      await task.update({ reminderSent: true, lastReminderSentAt: now });
+>>>>>>> 28528e26eaf52a94566981316940f0b41dcfe06f
     }
   }
   } catch (error) {
